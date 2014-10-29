@@ -83,6 +83,10 @@ def validate_string(string):
     return True if string else False
 
 
+def validate_date(date):
+    return date.utcoffset() is None
+
+
 class TimeSystem(Enum):
     GMST = 'GMST'
     GPS  = 'GPS'
@@ -298,7 +302,7 @@ class Header(KeywordContainer):
         self._creation_date = Keyword(
             'CREATION_DATE', creation_date,
             formatter=lambda x: x.isoformat(sep='T'),
-            validator=lambda x: x.utcoffset() is None)
+            validator=validate_date)
         self._originator = Keyword('ORIGINATOR', originator,
                                    validator=validate_string)
 
@@ -372,7 +376,7 @@ class Metadata(KeywordContainer):
         self._ref_frame_epoch = Keyword(
             'REF_FRAME_EPOCH', ref_frame_epoch, mandatory=False,
             formatter=lambda x: x.isoformat(sep='T'),
-            validator=lambda x: x.utcoffset() is None)
+            validator=validate_date)
         self._time_system     = Keyword('TIME_SYSTEM', time_system,
                                         formatter=lambda x: x.value)
 
@@ -476,7 +480,7 @@ class DataBlockStateVector(DataBlock, KeywordContainer):
         self._comment = DataKeyword('COMMENT', comment, mandatory=False)
         self._epoch   = DataKeyword(
             'EPOCH', epoch, formatter=lambda x: x.isoformat(sep='T'),
-            validator=lambda x: x.utcoffset() is None)
+            validator=validate_date)
         self._x       = DataKeyword('X', x, units='km')
         self._y       = DataKeyword('Y', y, units='km')
         self._z       = DataKeyword('Z', z, units='km')
@@ -1111,7 +1115,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
         self._man_epoch_ignition = DataKeyword(
             'MAN_EPOCH_IGNITION', man_epoch_ignition,
             formatter=lambda x: x.isoformat(sep='T'),
-            validator=lambda x: x.utcoffset() is None)
+            validator=validate_date)
         self._man_duration = DataKeyword('MAN_DURATION', man_duration,
                                          units='s')
         self._man_delta_mass = DataKeyword('MAN_DELTA_MASS', man_delta_mass,
