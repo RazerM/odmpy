@@ -49,3 +49,19 @@ class TestOpmHeader(unittest.TestCase):
                             metadata=self.valid_metadata,
                             data=self.valid_data)
         )
+
+    def test_empty_originator(self):
+        header = opm.Header(originator='')
+
+        # Check that validation fails
+
+        self.assertRaises(ValueError, header.validate_keywords)
+
+        # Check that OPM cannot be constructed from invalid header
+
+        self.assertRaises(
+            ValueError,
+            lambda: opm.Opm(header=header,
+                            metadata=self.valid_metadata,
+                            data=self.valid_data)
+        )

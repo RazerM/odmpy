@@ -299,7 +299,8 @@ class Header(KeywordContainer):
             'CREATION_DATE', creation_date,
             formatter=lambda x: x.isoformat(sep='T'),
             validator=lambda x: x.utcoffset() is None)
-        self._originator = Keyword('ORIGINATOR', originator)
+        self._originator = Keyword('ORIGINATOR', originator,
+                                   validator=validate_string)
 
         self.keywords = [
             self._opm_version,
