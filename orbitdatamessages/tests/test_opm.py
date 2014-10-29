@@ -65,3 +65,18 @@ class TestOpmHeader(unittest.TestCase):
                             metadata=self.valid_metadata,
                             data=self.valid_data)
         )
+
+
+class TestValidators(unittest.TestCase):
+    def test_validate_object_id(self):
+        self.assertTrue(opm.validate_object_id('2010-026A'))
+        self.assertTrue(opm.validate_object_id('2010-026AB'))
+        self.assertTrue(opm.validate_object_id('2010-026ABC'))
+        self.assertFalse(opm.validate_object_id(''))
+        self.assertFalse(opm.validate_object_id('201-026A'))
+        self.assertFalse(opm.validate_object_id('2010-02A'))
+        self.assertFalse(opm.validate_object_id('2010--026A'))
+
+    def test_validate_string(self):
+        self.assertTrue(opm.validate_string('non-empty'))
+        self.assertFalse(opm.validate_string(''))

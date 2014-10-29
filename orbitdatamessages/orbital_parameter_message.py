@@ -91,6 +91,11 @@ def validate_date(date):
     return date.utcoffset() is None
 
 
+def validate_object_id(object_id):
+    match = re.match('^[0-9]{4}\-[0-9]{3}[A-Z]{1,3}$', object_id)
+    return True if match else False
+
+
 class TimeSystem(Enum):
     GMST = 'GMST'
     GPS  = 'GPS'
@@ -372,9 +377,12 @@ class Metadata(KeywordContainer):
         """
         super().__init__()
         self._comment         = Keyword('COMMENT', comment, mandatory=False)
-        self._object_name     = Keyword('OBJECT_NAME', object_name)
-        self._object_id       = Keyword('OBJECT_ID', object_id)
-        self._center_name     = Keyword('CENTER_NAME', center_name)
+        self._object_name     = Keyword('OBJECT_NAME', object_name,
+                                        validator=validate_string)
+        self._object_id       = Keyword('OBJECT_ID', object_id,
+                                        validator=validate_object_id)
+        self._center_name     = Keyword('CENTER_NAME', center_name,
+                                        validator=validate_string)
         self._ref_frame       = Keyword('REF_FRAME', ref_frame,
                                         formatter=lambda x: x.value)
         self._ref_frame_epoch = Keyword(
