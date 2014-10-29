@@ -66,6 +66,42 @@ class TestOpmHeader(unittest.TestCase):
                             data=self.valid_data)
         )
 
+    def test_empty_object_id(self):
+        # Take valid metadata object, and set invalid object_id
+        metadata = self.valid_metadata
+        metadata.object_id = ''
+
+        # Check that validation fails
+
+        self.assertRaises(ValueError, metadata.validate_keywords)
+
+        # Check that OPM cannot be constructed from invalid header
+
+        self.assertRaises(
+            ValueError,
+            lambda: opm.Opm(header=self.valid_header,
+                            metadata=metadata,
+                            data=self.valid_data)
+        )
+
+    def test_invalid_object_id(self):
+        # Take valid metadata object, and set invalid object_id
+        # Note that the validator itself is tested in the TestValidators class
+        metadata = self.valid_metadata
+        metadata.object_id = '2010-062'
+
+        # Check that validation fails
+
+        self.assertRaises(ValueError, metadata.validate_keywords)
+
+        # Check that OPM cannot be constructed from invalid header
+
+        self.assertRaises(
+            ValueError,
+            lambda: opm.Opm(header=self.valid_header,
+                            metadata=metadata,
+                            data=self.valid_data)
+        )
 
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
