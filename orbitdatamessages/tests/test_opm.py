@@ -112,6 +112,9 @@ class TestValidators(unittest.TestCase):
         self.assertFalse(opm.validate_object_id('201-026A'))
         self.assertFalse(opm.validate_object_id('2010-02A'))
         self.assertFalse(opm.validate_object_id('2010--026A'))
+        self.assertFalse(opm.validate_object_id(' 2010-026A'))
+        self.assertFalse(opm.validate_object_id('2010-026A '))
+        self.assertFalse(opm.validate_object_id('2010 026A '))
 
     def test_validate_string(self):
         self.assertTrue(opm.validate_string('non-empty'))
