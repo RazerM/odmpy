@@ -5,3 +5,15 @@ Python 3.4+
 This package is for creating valid ASCII OPM, OMM, and OEM files using Python.
 
 Currently, only thr orbital parameter message (OPM) module has been implemented.
+
+### Installation
+
+```bash
+$ python3 setup.py install
+```
+
+### Testing
+
+```bash
+$ python3 setup.py test
+```
