@@ -4,7 +4,7 @@ from datetime import datetime
 import orbitdatamessages.orbital_parameter_message as opm
 
 
-class TestOpmHeader(unittest.TestCase):
+class TestOpmSections(unittest.TestCase):
     def setUp(self):
         # Create dummy sections with valid data.
 
@@ -122,7 +122,7 @@ class TestOpmHeader(unittest.TestCase):
             )
             ke.mean_anomaly = 0
 
-        # Check mean can't be set if true already has been
+        # Check true can't be set if mean already has been
         with self.assertRaises(opm.DuplicateKeywordError):
             ke = opm.DataBlockKeplerianElements(
                 semi_major_axis=0,
