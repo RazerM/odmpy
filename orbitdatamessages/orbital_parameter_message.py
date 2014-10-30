@@ -591,8 +591,7 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
         - inclination
         - ra_of_asc_node
         - arg_of_pericenter
-        - true_anomaly
-        - mean_anomaly
+        - true_anomaly or mean_anomaly
         - gm
 
         Optional keywords:
@@ -611,7 +610,7 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
         self._arg_of_pericenter = DataKeyword('ARG_OF_PERICENTER',
                                               arg_of_pericenter, units='deg')
 
-        if true_anomaly and mean_anomaly:
+        if true_anomaly is not None and mean_anomaly is not None:
             raise DuplicateKeywordError(
                 'mean_anomaly and true_anomaly cannot both be set')
 
@@ -639,7 +638,7 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
 
     @true_anomaly.setter
     def true_anomaly(self, value):
-        if self._mean_anomaly.value:
+        if self._mean_anomaly.value is not None:
             raise DuplicateKeywordError('mean_anomaly already set')
         self._true_anomaly.value = value
 
@@ -649,7 +648,7 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
 
     @mean_anomaly.setter
     def mean_anomaly(self, value):
-        if self._true_anomaly.value:
+        if self._true_anomaly.value is not None:
             raise DuplicateKeywordError('true_anomaly already set')
         self._mean_anomaly.value = value
 

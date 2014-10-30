@@ -43,12 +43,10 @@ class TestOpmHeader(unittest.TestCase):
 
         # Check that OPM cannot be constructed from invalid header
 
-        self.assertRaises(
-            ValueError,
-            lambda: opm.Opm(header=header,
-                            metadata=self.valid_metadata,
-                            data=self.valid_data)
-        )
+        with self.assertRaises(ValueError):
+            opm.Opm(header=header,
+                    metadata=self.valid_metadata,
+                    data=self.valid_data)
 
     def test_empty_originator(self):
         header = opm.Header(originator='')
@@ -59,12 +57,10 @@ class TestOpmHeader(unittest.TestCase):
 
         # Check that OPM cannot be constructed from invalid header
 
-        self.assertRaises(
-            ValueError,
-            lambda: opm.Opm(header=header,
-                            metadata=self.valid_metadata,
-                            data=self.valid_data)
-        )
+        with self.assertRaises(ValueError):
+            opm.Opm(header=header,
+                    metadata=self.valid_metadata,
+                    data=self.valid_data)
 
     def test_empty_object_id(self):
         # Take valid metadata object, and set invalid object_id
@@ -77,12 +73,10 @@ class TestOpmHeader(unittest.TestCase):
 
         # Check that OPM cannot be constructed from invalid header
 
-        self.assertRaises(
-            ValueError,
-            lambda: opm.Opm(header=self.valid_header,
-                            metadata=metadata,
-                            data=self.valid_data)
-        )
+        with self.assertRaises(ValueError):
+            opm.Opm(header=self.valid_header,
+                    metadata=metadata,
+                    data=self.valid_data)
 
     def test_invalid_object_id(self):
         # Take valid metadata object, and set invalid object_id
@@ -96,12 +90,50 @@ class TestOpmHeader(unittest.TestCase):
 
         # Check that OPM cannot be constructed from invalid header
 
-        self.assertRaises(
-            ValueError,
-            lambda: opm.Opm(header=self.valid_header,
-                            metadata=metadata,
-                            data=self.valid_data)
-        )
+        with self.assertRaises(ValueError):
+            opm.Opm(header=self.valid_header,
+                    metadata=metadata,
+                    data=self.valid_data)
+
+    def test_both_anomalies(self):
+        # Check both cannot be set during initialisation
+        with self.assertRaises(opm.DuplicateKeywordError):
+            opm.DataBlockKeplerianElements(
+                semi_major_axis=0,
+                eccentricity=0,
+                inclination=0,
+                ra_of_asc_node=0,
+                arg_of_pericenter=0,
+                true_anomaly=0,
+                mean_anomaly=0,
+                gm=0,
+            )
+
+        # Check mean can't be set if true already has been
+        with self.assertRaises(opm.DuplicateKeywordError):
+            ke = opm.DataBlockKeplerianElements(
+                semi_major_axis=0,
+                eccentricity=0,
+                inclination=0,
+                ra_of_asc_node=0,
+                arg_of_pericenter=0,
+                true_anomaly=0,
+                gm=0,
+            )
+            ke.mean_anomaly = 0
+
+        # Check mean can't be set if true already has been
+        with self.assertRaises(opm.DuplicateKeywordError):
+            ke = opm.DataBlockKeplerianElements(
+                semi_major_axis=0,
+                eccentricity=0,
+                inclination=0,
+                ra_of_asc_node=0,
+                arg_of_pericenter=0,
+                mean_anomaly=0,
+                gm=0,
+            )
+            ke.true_anomaly = 0
 
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
