@@ -135,6 +135,9 @@ class TestOpmSections(unittest.TestCase):
             )
             ke.true_anomaly = 0
 
+    def test_data_blocks(self):
+        pass
+
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
         self.assertTrue(opm.validate_object_id('2010-026A'))
