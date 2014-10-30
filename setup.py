@@ -16,10 +16,10 @@ class PyTest(Command):
         raise SystemExit(errno)
 
 
-setup(name='Orbit Data Messages',
+setup(name='orbit_data_messages',
       version='0.1.0',
-      description='Write valid ODM files.',
-      long_description=open('README.md').read(),
+      description='Create valid ASCII OPM, OMM, and OEM files.',
+      long_description=open('README.rst').read(),
       author='Frazer McLean',
       author_email='frazer@frazermclean.co.uk',
       url='https://github.com/RazerM/orbit-data-messages',
