@@ -123,6 +123,9 @@ class RefFrame(Enum):
     TDR      = 'TDR'
     TEME     = 'TEME'
     TOD      = 'TOD'
+    RSW      = 'RSW'
+    RTN      = 'RTN'
+    TNW      = 'TNW'
 
 
 class MissingKeywordError(Exception):
@@ -1154,7 +1157,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @comment.setter
     def comment(self, value):
-        self._comment = value
+        self._comment.value = value
 
     @property
     def man_epoch_ignition(self):
@@ -1162,7 +1165,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_epoch_ignition.setter
     def man_epoch_ignition(self, value):
-        self._man_epoch_ignition = value
+        self._man_epoch_ignition.value = value
 
     @property
     def man_duration(self):
@@ -1170,7 +1173,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_duration.setter
     def man_duration(self, value):
-        self._man_duration = value
+        self._man_duration.value = value
 
     @property
     def man_delta_mass(self):
@@ -1178,7 +1181,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_delta_mass.setter
     def man_delta_mass(self, value):
-        self._man_delta_mass = value
+        self._man_delta_mass.value = value
 
     @property
     def man_ref_frame(self):
@@ -1186,7 +1189,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_ref_frame.setter
     def man_ref_frame(self, value):
-        self._man_ref_frame = value
+        self._man_ref_frame.value = value
 
     @property
     def man_dv_1(self):
@@ -1194,7 +1197,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_dv_1.setter
     def man_dv_1(self, value):
-        self._man_dv_1 = value
+        self._man_dv_1.value = value
 
     @property
     def man_dv_2(self):
@@ -1202,7 +1205,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_dv_2.setter
     def man_dv_2(self, value):
-        self._man_dv_2 = value
+        self._man_dv_2.value = value
 
     @property
     def man_dv_3(self):
@@ -1210,7 +1213,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
     @man_dv_3.setter
     def man_dv_3(self, value):
-        self._man_dv_3 = value
+        self._man_dv_3.value = value
 
 
 class Data:
@@ -1244,7 +1247,7 @@ class Data:
         if self.maneuver_parameters is not None:
             if self.spacecraft_parameters is None:
                 raise TypeError('spacecraft parameters missing (mandatory if '
-                                'any maneuver parameters are set.')
+                                'any maneuver parameters are set).')
 
         self.blocks = [
             self.state_vector,
