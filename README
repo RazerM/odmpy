@@ -1,8 +1,7 @@
 Orbit Data Messages
 -------------------
 
-| |Build Status|
-| Python 3.4+
+|Build Status| |PyPI Version| |Python Version| |MIT License|
 
 This package is for creating valid ASCII OPM, OMM, and OEM files using
 Python.
@@ -31,5 +30,11 @@ Usage
 
     import orbitdatamessages.orbital_parameter_message as opm
 
-.. |Build Status| image:: https://travis-ci.org/RazerM/orbit-data-messages.svg?branch=master
+.. |Build Status| image:: http://img.shields.io/travis/RazerM/orbit-data-messages.svg?style=flat-square
    :target: https://travis-ci.org/RazerM/orbit-data-messages
+.. |PyPI Version| image:: http://img.shields.io/pypi/v/orbit-data-messages.svg?style=flat-square
+   :target: https://pypi.python.org/pypi/orbit_data_messages/
+.. |Python Version| image:: http://img.shields.io/badge/python-3.4%2B-brightgreen.svg?style=flat-square
+   :target: https://www.python.org/download/releases/3.4.0/
+.. |MIT License| image:: http://img.shields.io/badge/license-MIT-red.svg?style=flat-square
+   :target: http://opensource.org/licenses/MIT

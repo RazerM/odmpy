@@ -25,8 +25,9 @@ setup(
     author_email='frazer@frazermclean.co.uk',
     url='https://github.com/RazerM/orbit-data-messages',
     packages=['orbitdatamessages'],
-    cmdclass = {'test': PyTest},
+    cmdclass={'test': PyTest},
     classifiers=[
         'License :: OSI Approved :: MIT License'
-    ]
+    ],
+    license='MIT'
 )
