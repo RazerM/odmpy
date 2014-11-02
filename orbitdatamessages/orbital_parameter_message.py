@@ -162,6 +162,17 @@ class Keyword:
         self.formatter = formatter
         self.validator = validator
 
+    def __repr__(self):
+        return ('{name}('
+                'keyword={keyword!r}, '
+                'value={value!r}, '
+                'mandatory={mandatory!r})'
+               ).format(
+                    name=self.__class__.__name__,
+                    keyword=self.keyword,
+                    value=self.value,
+                    mandatory=self.mandatory)
+
     @property
     def formatted_value(self):
         """Format keyword value for writing to file."""
@@ -182,6 +193,19 @@ class DataKeyword(Keyword):
         super().__init__(keyword=keyword, value=value, mandatory=mandatory,
                          formatter=formatter, validator=validator)
         self.units = units
+
+    def __repr__(self):
+        return ('{name}('
+                'keyword={keyword!r}, '
+                'value={value!r}, '
+                'mandatory={mandatory!r}, '
+                'units={units!r})'
+               ).format(
+                    name=self.__class__.__name__,
+                    keyword=self.keyword,
+                    value=self.value,
+                    mandatory=self.mandatory,
+                    units=self.units)
 
 
 class KeywordContainer:
