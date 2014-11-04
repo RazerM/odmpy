@@ -2,8 +2,9 @@ language: python
 python:
   - "3.4"
 before_install:
-  - sudo pip install codecov
+  - sudo pip install codecov pytest-cov
 script:
-  - python setup.py test
+  - python setup.py install
+  - py.test --cov-report xml --cov orbitdatamessages
 after_success:
   - codecov
