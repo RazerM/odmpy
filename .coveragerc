@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = orbitdatamessages
+[report]
+exclude_lines =
+    def __repr__
+ignore_errors = True
