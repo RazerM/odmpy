@@ -3,8 +3,9 @@ python:
   - "3.4"
 before_install:
   - pip install codecov pytest-cov
+install:
+  - pip install -e .
 script:
-  - python setup.py install
   - py.test --cov-report xml --cov orbitdatamessages
 after_success:
   - codecov
