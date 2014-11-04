@@ -132,6 +132,10 @@ class MissingKeywordError(Exception):
     pass
 
 
+class MissingBlockError(Exception):
+    pass
+
+
 class DuplicateKeywordError(Exception):
     pass
 
@@ -490,7 +494,10 @@ class DataBlock:
 
     """Named block for part of OPM data section."""
 
-    def __init__(self, name):
+    def __init__(self, name=None):
+        """name parameter can be set by user, otherwise
+        default set at write time.
+        """
         super().__init__()
         self.name = name
 
@@ -515,7 +522,7 @@ class DataBlockStateVector(DataBlock, KeywordContainer):
         Optional keywords:
         - comment
         """
-        super().__init__(name='State Vector Components')
+        super().__init__()
         self._comment = DataKeyword('COMMENT', comment, mandatory=False)
         self._epoch   = DataKeyword(
             'EPOCH', epoch, formatter=lambda x: x.isoformat(sep='T'),
@@ -624,7 +631,7 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
         Optional keywords:
         - comment
         """
-        super().__init__(name='Osculating Keplerian Elements')
+        super().__init__()
         self._comment           = DataKeyword('COMMENT', comment,
                                               mandatory=False)
         self._semi_major_axis   = DataKeyword('SEMI_MAJOR_AXIS',
@@ -754,7 +761,7 @@ class DataBlockSpacecraftParameters(DataBlock, KeywordContainer):
         Optional keywords:
         - comment
         """
-        super().__init__(name='Spacecraft Parameters')
+        super().__init__()
         self._comment         = DataKeyword('COMMENT', comment,
                                             mandatory=False)
         self._mass            = DataKeyword('MASS', mass, units='kg',
@@ -875,7 +882,7 @@ class DataBlockCovarianceMatrix(DataBlock, KeywordContainer):
         - comment
         - cov_ref_frame
         """
-        super().__init__(name='Position/Velocity Covariance Matrix')
+        super().__init__()
         self._comment       = DataKeyword('COMMENT', comment, mandatory=False)
         self._cov_ref_frame = DataKeyword('COV_REF_FRAME', cov_ref_frame,
                                           mandatory=False, formatter=lambda x: x.value)
@@ -1148,7 +1155,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
         Optional keywords:
         - comment
         """
-        super().__init__(name='Maneuver Parameters')
+        super().__init__()
         self._comment = DataKeyword('COMMENT', comment, mandatory=False)
         self._man_epoch_ignition = DataKeyword(
             'MAN_EPOCH_IGNITION', man_epoch_ignition,
@@ -1169,7 +1176,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
             self._man_epoch_ignition,
             self._man_duration,
             self._man_delta_mass,
-            self._man_ref_fram,
+            self._man_ref_frame,
             self._man_dv_1,
             self._man_dv_2,
             self._man_dv_3
@@ -1240,6 +1247,17 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
         self._man_dv_3.value = value
 
 
+class DataBlockContainer:
+    def __init__(self, name, block, allow_multiple=False, mandatory=True,
+                 prerequisite=lambda: True, prerequisite_error=None):
+        self.name = name
+        self.block = block
+        self.allow_multiple = allow_multiple
+        self.mandatory = mandatory
+        self.prerequisite = prerequisite
+        self.prerequisite_error = prerequisite_error
+
+
 class Data:
     """OPM Data object (mandatory)."""
     def __init__(self, state_vector, spacecraft_parameters=None,
@@ -1259,19 +1277,30 @@ class Data:
         Note that maneuver_parameters can be an array of
         DataBlockManeuverParameters
         """
-        self.state_vector = state_vector
-        self.spacecraft_parameters = spacecraft_parameters
-        self.keplerian_elements = keplerian_elements
-        self.covariance_matrix = covariance_matrix
-        self.maneuver_parameters = maneuver_parameters
+        self._state_vector = DataBlockContainer(
+            name='State Vector Components',
+            block=state_vector)
+        self._spacecraft_parameters = DataBlockContainer(
+            name='Spacecraft Parameters',
+            block=spacecraft_parameters,
+            mandatory=False)
+        self._keplerian_elements = DataBlockContainer(
+            name='Osculating Keplerian Elements',
+            block=keplerian_elements,
+            mandatory=False)
+        self._covariance_matrix = DataBlockContainer(
+            name='osition/Velocity Covariance Matrix',
+            block=covariance_matrix,
+            mandatory=False)
+        self._maneuver_parameters = DataBlockContainer(
+            name='Maneuver Parameters',
+            block=maneuver_parameters,
+            mandatory=False,
+            allow_multiple=True,
+            prerequisite=lambda: self._spacecraft_parameters.block is not None,
+            prerequisite_error=('spacecraft parameters block mandatory if any '
+                                'maneuver_parameters are given'))
 
-        if self.state_vector is None:
-            raise TypeError('state vector block missing.')
-
-        if self.maneuver_parameters is not None:
-            if self.spacecraft_parameters is None:
-                raise TypeError('spacecraft parameters missing (mandatory if '
-                                'any maneuver parameters are set).')
 
         self.blocks = [
             self.state_vector,
@@ -1280,6 +1309,73 @@ class Data:
             self.covariance_matrix,
             self.maneuver_parameters
         ]
+
+    def validate_blocks(self):
+        for bc in self.blocks:
+            if bc.mandatory and bc.block is None:
+                raise MissingBlockError(bc.name)
+            if bc.block is not None:
+                if not bc.prerequisite():
+                    raise ValueError(bc.prerequisite_error)
+                if not isinstance(bc.block, DataBlock):
+                    if isinstance(bc.block, list):
+                        if not bc.allow_multiple:
+                            raise ValueError('the ''{name}'' block cannot be '
+                                             'repeated.'.format(name=bc.name))
+                        for block in bc.block:
+                            if not isinstance(block, DataBlock):
+                                raise TypeError('data blocks must subclass '
+                                                '{}.DataBlock'.format(__name__))
+                    else:
+                        raise TypeError('data blocks must subclass {}.'
+                                        'DataBlock, or be a list containing'
+                                        'them'.format(__name__))
+
+    @property
+    def state_vector(self):
+        return self._state_vector
+
+    @state_vector.setter
+    def state_vector(self, value):
+        if value is None:
+            raise ValueError('state vector cannot be None.')
+        self._state_vector.block = value
+
+    @property
+    def spacecraft_parameters(self):
+        return self._spacecraft_parameters
+
+    @spacecraft_parameters.setter
+    def spacecraft_parameters(self, value):
+        if self.maneuver_parameters is not None:
+            if value is None:
+                raise ValueError('spacecraft parameters mandatory if '
+                                 'any maneuver parameters are set.')
+        self._spacecraft_parameters.block = value
+
+    @property
+    def keplerian_elements(self):
+        return self._keplerian_elements
+
+    @keplerian_elements.setter
+    def keplerian_elements(self, value):
+        self._keplerian_elements.block = value
+
+    @property
+    def covariance_matrix(self):
+        return self._covariance_matrix
+
+    @covariance_matrix.setter
+    def covariance_matrix(self, value):
+        self._covariance_matrix.block = value
+
+    @property
+    def maneuver_parameters(self):
+        return self._maneuver_parameters
+
+    @maneuver_parameters.setter
+    def maneuver_parameters(self, value):
+        self._maneuver_parameters.block = value
 
 
 class Opm:
@@ -1305,24 +1401,7 @@ class Opm:
 
         self.header.validate_keywords()
         self.metadata.validate_keywords()
-
-        for block in self.data.blocks:
-            if block is not None:
-                if isinstance(block, DataBlock):
-                    block.validate_keywords()
-                elif isinstance(block, list):
-                    for ind in block:
-                        if not isinstance(ind, DataBlock):
-                            raise TypeError('data blocks must subclass '
-                                            '{}.DataBlock'.format(__name__))
-                        if not isinstance(ind, DataBlockManeuverParameters):
-                            raise TypeError(
-                                'only {}.DataBlockManeuverParameters can'
-                                ' be repeated')
-                        ind.validate_keywords()
-                else:
-                    raise TypeError('data blocks must subclass '
-                                    '{}.DataBlock'.format(__name__))
+        self.data.validate_blocks()
 
     def write(self, fp):
         fp.writelines(suffix('\n', self.output()))
@@ -1335,10 +1414,10 @@ class Opm:
         for line in self.metadata.create_output_align_equals():
             yield line
         yield ''
-        for block in self.data.blocks:
-            if block is not None:
-                yield 'COMMENT %s' % block.name
-                for line in block.create_output_align_decimal():
+        for bc in self.data.blocks:
+            if bc.block is not None:
+                yield 'COMMENT %s' % (bc.name if bc.block.name is None else bc.block.name)
+                for line in bc.block.create_output_align_decimal():
                     yield line
                 yield ''
         if self.user_defined is not None:

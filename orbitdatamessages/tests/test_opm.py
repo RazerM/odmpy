@@ -135,8 +135,69 @@ class TestOpmSections(unittest.TestCase):
             )
             ke.true_anomaly = 0
 
-    def test_data_blocks(self):
-        pass
+    def test_data_block_missing_spacecraft_parameters(self):
+        """If maneuver parameters are used, spacecraft parameters block
+        is mandatory.
+        """
+        mp = opm.DataBlockManeuverParameters(
+            man_epoch_ignition=datetime.utcnow(),
+            man_duration=1,
+            man_delta_mass=1,
+            man_ref_frame=opm.RefFrame.TNW,
+            man_dv_1=1,
+            man_dv_2=0,
+            man_dv_3=0
+        )
+
+        data = self.valid_data
+        data.maneuver_parameters = mp
+        with self.assertRaises(ValueError):
+            data.validate_blocks()
+
+        with self.assertRaises(ValueError):
+            opm.Opm(header=self.valid_header,
+                    metadata=self.valid_metadata,
+                    data=data)
+
+    def test_multiple_maneuver_parameters(self):
+        """There can be one or more maneuver parameters blocks"""
+        mp1 = opm.DataBlockManeuverParameters(
+            man_epoch_ignition=datetime.utcnow(),
+            man_duration=1,
+            man_delta_mass=1,
+            man_ref_frame=opm.RefFrame.TNW,
+            man_dv_1=1,
+            man_dv_2=0,
+            man_dv_3=0
+        )
+
+        mp2 = opm.DataBlockManeuverParameters(
+            man_epoch_ignition=datetime.utcnow(),
+            man_duration=2,
+            man_delta_mass=1,
+            man_ref_frame=opm.RefFrame.TNW,
+            man_dv_1=1,
+            man_dv_2=1,
+            man_dv_3=1
+        )
+
+        sp = opm.DataBlockSpacecraftParameters(
+            mass=0,
+            solar_rad_area=0,
+            solar_rad_coeff=0,
+            drag_area=0,
+            drag_coeff=0
+        )
+
+        data = self.valid_data
+        data.maneuver_parameters = mp1
+        data.spacecraft_parameters = sp
+
+        data.validate_blocks()
+
+        data.maneuver_parameters = [mp1, mp2]
+        data.validate_blocks()
+
 
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
