@@ -1329,7 +1329,7 @@ class Data:
                     else:
                         raise TypeError('data blocks must subclass {}.'
                                         'DataBlock, or be a list containing'
-                                        'them'.format(__name__))
+                                        ' them'.format(__name__))
 
     @property
     def state_vector(self):

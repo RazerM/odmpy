@@ -217,6 +217,88 @@ class TestOpmSections(unittest.TestCase):
         with self.assertRaises(opm.MissingBlockError):
             data.validate_blocks()
 
+    def test_invalid_multiple_blocks(self):
+        sv = self.valid_data.state_vector.block
+
+        sp = opm.DataBlockSpacecraftParameters(
+            mass=0,
+            solar_rad_area=0,
+            solar_rad_coeff=0,
+            drag_area=0,
+            drag_coeff=0
+        )
+
+        ke = opm.DataBlockKeplerianElements(
+            semi_major_axis=0,
+            eccentricity=0,
+            inclination=0,
+            ra_of_asc_node=0,
+            arg_of_pericenter=0,
+            true_anomaly=0,
+            gm=0
+        )
+
+        cm = opm.DataBlockCovarianceMatrix(
+            cx_x=0,
+            cy_x=0,
+            cy_y=0,
+            cz_x=0,
+            cz_y=0,
+            cz_z=0,
+            cx_dot_x=0,
+            cx_dot_y=0,
+            cx_dot_z=0,
+            cx_dot_x_dot=0,
+            cy_dot_x=0,
+            cy_dot_y=0,
+            cy_dot_z=0,
+            cy_dot_x_dot=0,
+            cy_dot_y_dot=0,
+            cz_dot_x=0,
+            cz_dot_y=0,
+            cz_dot_z=0,
+            cz_dot_x_dot=0,
+            cz_dot_y_dot=0,
+            cz_dot_z_dot=0
+        )
+
+
+        data = opm.Data(
+            state_vector=[sv, sv],
+            spacecraft_parameters=sp,
+            keplerian_elements=ke,
+            covariance_matrix=cm,
+        )
+        with self.assertRaises(ValueError):
+            data.validate_blocks()
+
+        data = opm.Data(
+            state_vector=sv,
+            spacecraft_parameters=[sp, sp],
+            keplerian_elements=ke,
+            covariance_matrix=cm,
+        )
+        with self.assertRaises(ValueError):
+            data.validate_blocks()
+
+        data = opm.Data(
+            state_vector=sv,
+            spacecraft_parameters=sp,
+            keplerian_elements=[ke, ke],
+            covariance_matrix=cm,
+        )
+        with self.assertRaises(ValueError):
+            data.validate_blocks()
+
+        data = opm.Data(
+            state_vector=sv,
+            spacecraft_parameters=sp,
+            keplerian_elements=ke,
+            covariance_matrix=[cm, cm],
+        )
+        with self.assertRaises(ValueError):
+            data.validate_blocks()
+
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
         self.assertTrue(opm.validate_object_id('2010-026A'))
