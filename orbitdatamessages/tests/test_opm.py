@@ -195,9 +195,27 @@ class TestOpmSections(unittest.TestCase):
 
         data.validate_blocks()
 
+        opm.Opm(header=self.valid_header,
+                metadata=self.valid_metadata,
+                data=data)
+
         data.maneuver_parameters = [mp1, mp2]
         data.validate_blocks()
 
+        opm.Opm(header=self.valid_header,
+                metadata=self.valid_metadata,
+                data=data)
+
+    def test_missing_state_vector(self):
+        data = self.valid_data
+        with self.assertRaises(ValueError):
+            data.state_vector = None
+
+        data = opm.Data(
+            state_vector=None
+        )
+        with self.assertRaises(opm.MissingBlockError):
+            data.validate_blocks()
 
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
