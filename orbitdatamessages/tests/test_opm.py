@@ -323,6 +323,13 @@ class TestOpmSections(unittest.TestCase):
         with self.assertRaises(TypeError):
             data.validate_blocks()
 
+    def test_block_type(self):
+        data = self.valid_data
+        data.keplerian_elements = 'a'
+
+        with self.assertRaises(TypeError):
+            data.validate_blocks()
+
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
         self.assertTrue(opm.validate_object_id('2010-026A'))
