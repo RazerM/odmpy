@@ -10,7 +10,7 @@ Currently, only the orbital parameter message (OPM) module has been implemented.
 ### Installation
 
 ```bash
-$ python3 setup.py install
+$ pip3 install orbitdatamessages
 ```
 
 ### Testing
