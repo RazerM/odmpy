@@ -62,6 +62,13 @@ class TestOpmSections(unittest.TestCase):
                     metadata=self.valid_metadata,
                     data=self.valid_data)
 
+    def test_missing_keyword(self):
+        header = self.valid_header
+        header.originator = None
+
+        with self.assertRaises(opm.MissingKeywordError):
+            header.validate_keywords()
+
     def test_empty_object_id(self):
         # Take valid metadata object, and set invalid object_id
         metadata = self.valid_metadata
@@ -297,6 +304,23 @@ class TestOpmSections(unittest.TestCase):
             covariance_matrix=[cm, cm],
         )
         with self.assertRaises(ValueError):
+            data.validate_blocks()
+
+    def test_multiple_blocks_type(self):
+        data = self.valid_data
+
+        sp = opm.DataBlockSpacecraftParameters(
+            mass=0,
+            solar_rad_area=0,
+            solar_rad_coeff=0,
+            drag_area=0,
+            drag_coeff=0
+        )
+
+        data.spacecraft_parameters = sp
+        data.maneuver_parameters = [1]
+
+        with self.assertRaises(TypeError):
             data.validate_blocks()
 
 class TestValidators(unittest.TestCase):
