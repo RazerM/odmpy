@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
 from distutils.core import setup, Command
 
+import re
+
+INIT_FILE = 'orbitdatamessages/__init__.py'
+init_data = open(INIT_FILE).read()
+
+metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", init_data))
+
+AUTHOR_EMAIL = metadata['author']
+VERSION = metadata['version']
+LICENSE = metadata['license']
+
+AUTHOR, EMAIL = re.match(r'(.*) <(.*)>', AUTHOR_EMAIL).groups()
+
 
 class PyTest(Command):
+    """Allow 'python3 setup.py test' to run without first installing pytest"""
     user_options = []
     def initialize_options(self):
         pass
@@ -11,23 +25,23 @@ class PyTest(Command):
         pass
 
     def run(self):
-        import sys,subprocess
+        import sys, subprocess
         errno = subprocess.call([sys.executable, 'runtests.py'])
         raise SystemExit(errno)
 
 
 setup(
     name='orbit_data_messages',
-    version='0.1.2.dev0',
+    version=VERSION,
     description='Create valid ASCII OPM, OMM, and OEM files.',
     long_description=open('README').read(),
-    author='Frazer McLean',
-    author_email='frazer@frazermclean.co.uk',
+    author=AUTHOR,
+    author_email=EMAIL,
     url='https://github.com/RazerM/orbit-data-messages',
     packages=['orbitdatamessages'],
     cmdclass={'test': PyTest},
     classifiers=[
         'License :: OSI Approved :: MIT License'
     ],
-    license='MIT'
+    license=LICENSE
 )
