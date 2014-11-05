@@ -40,4 +40,4 @@ Usage
 .. |Python Version| image:: http://img.shields.io/badge/python-3.4%2B-brightgreen.svg?style=flat-square
    :target: https://www.python.org/download/releases/3.4.0/
 .. |MIT License| image:: http://img.shields.io/badge/license-MIT-red.svg?style=flat-square
-   :target: http://opensource.org/licenses/MIT
+   :target: https://raw.githubusercontent.com/RazerM/orbit-data-messages/master/LICENSE
