@@ -18,7 +18,7 @@ class PyTest(Command):
 
 setup(
     name='orbit_data_messages',
-    version='0.1.1',
+    version='0.1.2.dev0',
     description='Create valid ASCII OPM, OMM, and OEM files.',
     long_description=open('README').read(),
     author='Frazer McLean',
