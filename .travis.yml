@@ -6,6 +6,6 @@ before_install:
 install:
   - pip install -e .
 script:
-  - py.test --cov-report xml --cov orbitdatamessages
+  - py.test --cov-report xml --cov-config .coveragerc --cov orbitdatamessages
 after_success:
   - codecov
