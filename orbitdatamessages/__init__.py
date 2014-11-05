@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'Frazer McLean <frazer@frazermclean.co.uk>'
-__version__ = '0.1.2'
+__version__ = 'y.dev0'
 __license__ = 'MIT License'
 
 
