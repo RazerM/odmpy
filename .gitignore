@@ -1,2 +1,8 @@
 __pycache__
 *.sublime*
+.coverage
+coverage.xml
+MANIFEST
+build/
+dist/
+*.egg-info/
