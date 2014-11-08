@@ -2,7 +2,7 @@
 
 __author__ = 'Frazer McLean <frazer@frazermclean.co.uk>'
 __version__ = '0.1.5.dev0'
-__license__ = 'MIT License'
+__license__ = 'MIT'
 
 
 def test():

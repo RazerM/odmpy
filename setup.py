@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from distutils.core import setup, Command
+from setuptools import setup, Command, find_packages
 
 import re
 
@@ -29,7 +29,6 @@ class PyTest(Command):
         errno = subprocess.call([sys.executable, 'runtests.py'])
         raise SystemExit(errno)
 
-
 setup(
     name='orbit_data_messages',
     version=VERSION,
@@ -38,10 +37,16 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     url='https://github.com/RazerM/orbit-data-messages',
-    packages=['orbitdatamessages'],
+    packages=find_packages(),
     cmdclass={'test': PyTest},
     classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Astronomy',
         'License :: OSI Approved :: MIT License'
     ],
-    license=LICENSE
+    license=LICENSE,
+    extras_require={
+        'test': ['pytest']
+    }
 )
