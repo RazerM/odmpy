@@ -1,6 +1,6 @@
 import unittest
 
-import orbitdatamessages.orbital_parameter_message as opm
+import orbitdatamessages.opm as opm
 
 
 class TestHelpers(unittest.TestCase):

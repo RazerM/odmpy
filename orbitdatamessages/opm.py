@@ -3,7 +3,7 @@ Module for creating valid OPM files as specified in the Orbit Data Message
 Recommended Standard CCSDS 502.0-B-2
 
 Recommended import syntax:
-import orbitdatamessages.orbital_parameter_message as opm
+import orbitdatamessages.opm as opm
 """
 import re
 import textwrap
@@ -12,7 +12,7 @@ from enum import Enum
 from math import floor, log10
 from numbers import Number
 
-# from orbitdatamessages.orbital_parameter_message import * considered harmful
+# from orbitdatamessages.opm import * considered harmful
 # Even so, make sure only core functionality gets imported
 __all__ = [
     'DataBlockCovarianceMatrix',

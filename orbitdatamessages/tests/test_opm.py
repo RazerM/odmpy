@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-import orbitdatamessages.orbital_parameter_message as opm
+import orbitdatamessages.opm as opm
 
 
 class TestOpmSections(unittest.TestCase):
