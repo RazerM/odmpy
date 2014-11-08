@@ -39,5 +39,5 @@ Usage
    :target: https://pypi.python.org/pypi/orbit_data_messages/
 .. |Python Version| image:: http://img.shields.io/badge/python-3.4%2B-brightgreen.svg?style=flat-square
    :target: https://www.python.org/download/releases/3.4.0/
-.. |MIT License| image:: http://img.shields.io/badge/license-MIT-red.svg?style=flat-square
+.. |MIT License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
    :target: https://raw.githubusercontent.com/RazerM/orbit-data-messages/master/LICENSE
