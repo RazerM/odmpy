@@ -324,7 +324,7 @@ class Header(KeywordContainer):
     """
 
     def __init__(self, originator, opm_version='2.0',
-                 creation_date=datetime.utcnow(), comment=None):
+                 creation_date=None, comment=None):
         """Initialise OPM Header.
 
         Required keywords:
@@ -336,6 +336,10 @@ class Header(KeywordContainer):
         - comment
         """
         super().__init__()
+
+        if creation_date is None:
+            creation_date = datetime.utcnow()
+
         self._opm_version = Keyword('CCSDS_OPM_VERS', opm_version,
                                     validator=validate_string)
         self._comment = Keyword('COMMENT', comment, mandatory=False)
