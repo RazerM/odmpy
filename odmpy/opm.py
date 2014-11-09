@@ -3,7 +3,7 @@ Module for creating valid OPM files as specified in the Orbit Data Message
 Recommended Standard CCSDS 502.0-B-2
 
 Recommended import syntax:
-import orbitdatamessages.orbital_parameter_message as opm
+import odmpy.opm as opm
 """
 import re
 import textwrap
@@ -12,17 +12,18 @@ from enum import Enum
 from math import floor, log10
 from numbers import Number
 
-# from orbitdatamessages.orbital_parameter_message import * considered harmful
+# from odmpy.opm import * considered harmful
 # Even so, make sure only core functionality gets imported
 __all__ = [
+    'Opm',
+    'Header',
+    'Metadata',
+    'Data',
     'DataBlockCovarianceMatrix',
     'DataBlockKeplerianElements',
     'DataBlockManeuverParameters',
     'DataBlockSpacecraftParameters',
     'DataBlockStateVector',
-    'Header',
-    'Metadata',
-    'Opm',
     'RefFrame',
     'TimeSystem',
 ]
@@ -97,6 +98,33 @@ def validate_object_id(object_id):
 
 
 class TimeSystem(Enum):
+    """Time system.
+
+    GMST
+      Greenwich Mean Sidereal Time
+    GPS
+      Global Positioning System
+    MET
+      Mission Elapsed Time (note)
+    MRT
+      Mission Relative Time (note)
+    SCLK
+      Spacecraft Clock (receiver) (requires rules for interpretation in ICD)
+    TAI
+      International Atomic Time
+    TCB
+      Barycentric Coordinate Time
+    TDB
+      Barycentric Dynamical Time
+    TCG
+      Geocentric Coordinate Time
+    TT
+      Terrestrial Time
+    UT1
+      Universal Time
+    UTC
+      Coordinated Universal Time
+    """
     GMST = 'GMST'
     GPS  = 'GPS'
     MET  = 'MET'
@@ -112,6 +140,39 @@ class TimeSystem(Enum):
 
 
 class RefFrame(Enum):
+    """Reference frame.
+
+    EME2000
+      Earth Mean Equator and Equinox of J2000
+    GCRF
+      Geocentric Celestial Reference Frame
+    GRC
+      Greenwich Rotating Coordinates
+    ICRF
+      International Celestial Reference Frame
+    ITRF2000
+      International Terrestrial Reference Frame 2000
+    ITRF-93
+      International Terrestrial Reference Frame 1993
+    ITRF-97
+      International Terrestrial Reference Frame 1997
+    MCI
+      Mars Centered Inertial
+    TDR
+      True of Date, Rotating
+    TEME
+      True Equator Mean Equinox (see below)
+    TOD
+      True of Date
+    RSW
+      Another name for RTN
+    RTN
+      Radial, transverse, normal
+    TNW
+      A local orbital coordinate frame that has the x-axis along the velocity
+      vector, W along the orbital angular momentum vector, and N completes
+      the right handed system.
+    """
     EME2000  = 'EME2000'
     GCRF     = 'GCRF'
     GRC      = 'GRC'
@@ -232,7 +293,10 @@ class KeywordContainer:
         self.keywords = list()
 
     def validate_keywords(self):
-        """Ensure keywords are valid and set (if mandatory).
+        """Ensures keywords are valid and set (if mandatory).
+
+        :raises odmpy.opm.MissingKeywordError: if a mandatory keyword `is None`
+        :raises ValueError: if keyword validation fails
 
         This method should be called internally before data meant for output
         is produced.
@@ -317,14 +381,17 @@ class KeywordContainer:
 
 class Header(KeywordContainer):
 
-    """OPM Header object (mandatory).
+    """OPM Header object.
 
-    Properties are used so that instance variables can be set with assignment,
-    but the full keyword object is returned when read.
+    :param str opm_version: CCSDS OPM version.
+    :param creation_date: Creation date. Defaults to current time.
+    :type creation_date: :py:class:`~datetime.datetime`-like object
+    :param str originator: Creating agency or operator.
+    :param str comment: Single or multi-line comment.
     """
 
     def __init__(self, originator, opm_version='2.0',
-                 creation_date=datetime.utcnow(), comment=None):
+                 creation_date=None, comment=None):
         """Initialise OPM Header.
 
         Required keywords:
@@ -336,15 +403,21 @@ class Header(KeywordContainer):
         - comment
         """
         super().__init__()
-        self._opm_version = Keyword('CCSDS_OPM_VERS', opm_version,
-                                    validator=validate_string)
+
+        if creation_date is None:
+            creation_date = datetime.utcnow()
+
+        self._opm_version = Keyword(
+            'CCSDS_OPM_VERS', opm_version, validator=validate_string)
+
         self._comment = Keyword('COMMENT', comment, mandatory=False)
+
         self._creation_date = Keyword(
             'CREATION_DATE', creation_date,
-            formatter=lambda x: x.isoformat(sep='T'),
-            validator=validate_date)
-        self._originator = Keyword('ORIGINATOR', originator,
-                                   validator=validate_string)
+            formatter=lambda x: x.isoformat(sep='T'), validator=validate_date)
+
+        self._originator = Keyword(
+            'ORIGINATOR', originator, validator=validate_string)
 
         self.keywords = [
             self._opm_version,
@@ -388,11 +461,22 @@ class Header(KeywordContainer):
 
 class Metadata(KeywordContainer):
 
-    """OPM Metadata object (mandatory)."""
+    """OPM Metadata object.
 
-    def __init__(self, object_name=None, object_id=None, center_name=None,
-                 ref_frame=None, ref_frame_epoch=None, time_system=None,
-                 comment=None):
+    :param str object_name: Spacecraft name.
+    :param str object_id: Object identifier. International Designator recommended.
+    :param str center_name: Origin of reference frame.
+    :param ref_frame: Reference frame in which state is defined.
+    :type ref_frame: :py:class:`~odmpy.opm.RefFrame`
+    :param time_system: Time system used for state vector, maneuver, and covariance data.
+    :type time_system: :py:class:`~odmpy.opm.TimeSystem`
+    :param ref_frame_epoch: Epoch of reference frame.
+    :type ref_frame_epoch: :py:class:`~datetime.datetime`-like object
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, object_name, object_id, center_name, ref_frame,
+                 time_system, ref_frame_epoch=None, comment=None):
         """Initialise OPM Metadata section.
 
         Required keywords:
@@ -407,21 +491,25 @@ class Metadata(KeywordContainer):
         - ref_frame_epoch
         """
         super().__init__()
-        self._comment         = Keyword('COMMENT', comment, mandatory=False)
-        self._object_name     = Keyword('OBJECT_NAME', object_name,
-                                        validator=validate_string)
-        self._object_id       = Keyword('OBJECT_ID', object_id,
-                                        validator=validate_object_id)
-        self._center_name     = Keyword('CENTER_NAME', center_name,
-                                        validator=validate_string)
-        self._ref_frame       = Keyword('REF_FRAME', ref_frame,
-                                        formatter=lambda x: x.value)
+        self._comment = Keyword('COMMENT', comment, mandatory=False)
+        self._object_name = Keyword(
+            'OBJECT_NAME', object_name, validator=validate_string)
+
+        self._object_id = Keyword(
+            'OBJECT_ID', object_id, validator=validate_object_id)
+
+        self._center_name = Keyword(
+            'CENTER_NAME', center_name, validator=validate_string)
+
+        self._ref_frame = Keyword(
+            'REF_FRAME', ref_frame, formatter=lambda x: x.value)
+
         self._ref_frame_epoch = Keyword(
             'REF_FRAME_EPOCH', ref_frame_epoch, mandatory=False,
-            formatter=lambda x: x.isoformat(sep='T'),
-            validator=validate_date)
-        self._time_system     = Keyword('TIME_SYSTEM', time_system,
-                                        formatter=lambda x: x.value)
+            formatter=lambda x: x.isoformat(sep='T'), validator=validate_date)
+
+        self._time_system = Keyword(
+            'TIME_SYSTEM', time_system, formatter=lambda x: x.value)
 
         self.keywords = [
             self._comment,
@@ -504,10 +592,20 @@ class DataBlock:
 
 class DataBlockStateVector(DataBlock, KeywordContainer):
 
-    """State vector block for OPM data section."""
+    """State vector block for OPM data section.
 
-    def __init__(self, comment=None, epoch=None, x=None, y=None, z=None,
-                 x_dot=None, y_dot=None, z_dot=None):
+    :param epoch: Epoch of state vector.
+    :type epoch: :py:class:`~datetime.datetime`-like object
+    :param float x: :math:`x` [km].
+    :param float y: :math:`y` [km].
+    :param float z: :math:`z` [km].
+    :param float x_dot: :math:`\dot{x}` [km/s].
+    :param float y_dot: :math:`\dot{y}` [km/s].
+    :param float z_dot: :math:`\dot{z}` [km/s].
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, epoch, x, y, z, x_dot, y_dot, z_dot, comment=None):
         """Initialise state vector data block.
 
         Required keywords:
@@ -612,11 +710,27 @@ class DataBlockStateVector(DataBlock, KeywordContainer):
 
 class DataBlockKeplerianElements(DataBlock, KeywordContainer):
 
-    """Keplerian elements block for OPM data section."""
+    """Keplerian elements block for OPM data section.
 
-    def __init__(self, comment=None, semi_major_axis=None, eccentricity=None,
-                 inclination=None, ra_of_asc_node=None, arg_of_pericenter=None,
-                 true_anomaly=None, mean_anomaly=None, gm=None):
+    :param float semi_major_axis: Semimajor axis [km].
+    :param float eccentricity: Eccentricity [--].
+    :param float inclination: Inclination [deg].
+    :param float ra_of_asc_node: Right ascension of the ascending node [deg].
+    :param float arg_of_pericenter: Argument of pericenter [deg].
+    :param float true_anomaly: True anomaly [deg].
+    :param float mean_anomaly: Mean anomaly [deg].
+    :param float gm: Gravitational coefficient [km\ :sup:`3`\ s\ :sup:`-2`]
+    :param str comment: Single or multi-line comment.
+
+    .. note::
+
+       Either `true_anomaly` or `mean_anomaly` must be set before the block is
+       validated (usually instigated by :py:class:`odmpy.opm.Opm`)
+    """
+
+    def __init__(self, semi_major_axis, eccentricity, inclination,
+                 ra_of_asc_node, arg_of_pericenter, gm, true_anomaly=None,
+                 mean_anomaly=None, comment=None):
         """Initialise keplerian elements data block.
 
         Required keywords:
@@ -632,27 +746,36 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
         - comment
         """
         super().__init__()
-        self._comment           = DataKeyword('COMMENT', comment,
-                                              mandatory=False)
-        self._semi_major_axis   = DataKeyword('SEMI_MAJOR_AXIS',
-                                              semi_major_axis, units='km')
-        self._eccentricity      = DataKeyword('ECCENTRICITY', eccentricity)
-        self._inclination       = DataKeyword('INCLINATION', inclination,
-                                              units='deg')
-        self._ra_of_asc_node    = DataKeyword('RA_OF_ASC_NODE', ra_of_asc_node,
-                                              units='deg')
-        self._arg_of_pericenter = DataKeyword('ARG_OF_PERICENTER',
-                                              arg_of_pericenter, units='deg')
+        self._comment = DataKeyword(
+            'COMMENT', comment, mandatory=False)
+
+        self._semi_major_axis = DataKeyword(
+            'SEMI_MAJOR_AXIS', semi_major_axis, units='km')
+
+        self._eccentricity = DataKeyword(
+            'ECCENTRICITY', eccentricity)
+
+        self._inclination = DataKeyword(
+            'INCLINATION', inclination, units='deg')
+
+        self._ra_of_asc_node = DataKeyword(
+            'RA_OF_ASC_NODE', ra_of_asc_node, units='deg')
+
+        self._arg_of_pericenter = DataKeyword(
+            'ARG_OF_PERICENTER', arg_of_pericenter, units='deg')
 
         if true_anomaly is not None and mean_anomaly is not None:
             raise DuplicateKeywordError(
                 'mean_anomaly and true_anomaly cannot both be set')
 
-        self._true_anomaly      = DataKeyword('TRUE_ANOMALY', true_anomaly,
-                                              units='deg')
-        self._mean_anomaly      = DataKeyword('MEAN_ANOMALY', mean_anomaly,
-                                              units='deg')
-        self._gm                = DataKeyword('GM', gm, units='km**3/s**2')
+        self._true_anomaly = DataKeyword(
+            'TRUE_ANOMALY', true_anomaly, units='deg')
+
+        self._mean_anomaly = DataKeyword(
+            'MEAN_ANOMALY', mean_anomaly, units='deg')
+
+        self._gm = DataKeyword(
+            'GM', gm, units='km**3/s**2')
 
         self.keywords = [
             self._comment,
@@ -745,10 +868,18 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
 
 class DataBlockSpacecraftParameters(DataBlock, KeywordContainer):
 
-    """Spacecraft parameters block for OPM data section."""
+    """Spacecraft parameters block for OPM data section.
 
-    def __init__(self, comment=None, mass=None, solar_rad_area=None,
-                 solar_rad_coeff=None, drag_area=None, drag_coeff=None):
+    :param float mass: Spacecraft mass [kg].
+    :param float solar_rad_area: Solar radiation pressure area [m\ :sup:`2`].
+    :param float solar_rad_coeff: Solar radiation pressure coefficient [--].
+    :param float drag_area: Drag area [m\ :sup:`2`].
+    :param float drag_coeff: Drag coefficient [--].
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, mass, solar_rad_area, solar_rad_coeff, drag_area,
+                 drag_coeff, comment=None):
         """Initialise spacecraft parameters data block.
 
         Required keywords:
@@ -762,18 +893,21 @@ class DataBlockSpacecraftParameters(DataBlock, KeywordContainer):
         - comment
         """
         super().__init__()
-        self._comment         = DataKeyword('COMMENT', comment,
-                                            mandatory=False)
-        self._mass            = DataKeyword('MASS', mass, units='kg',
-                                            mandatory=False)
-        self._solar_rad_area  = DataKeyword('SOLAR_RAD_AREA', solar_rad_area,
-                                            units='m**2', mandatory=False)
-        self._solar_rad_coeff = DataKeyword('SOLAR_RAD_COEFF', solar_rad_coeff,
-                                            mandatory=False)
-        self._drag_area       = DataKeyword('DRAG_AREA', drag_area,
-                                            units='m**2', mandatory=False)
-        self._drag_coeff      = DataKeyword('DRAG_COEFF', drag_coeff,
-                                            mandatory=False)
+        self._comment = DataKeyword('COMMENT', comment, mandatory=False)
+
+        self._mass = DataKeyword('MASS', mass, units='kg', mandatory=False)
+
+        self._solar_rad_area = DataKeyword(
+            'SOLAR_RAD_AREA', solar_rad_area, units='m**2', mandatory=False)
+
+        self._solar_rad_coeff = DataKeyword(
+            'SOLAR_RAD_COEFF', solar_rad_coeff, mandatory=False)
+
+        self._drag_area = DataKeyword(
+            'DRAG_AREA', drag_area, units='m**2', mandatory=False)
+
+        self._drag_coeff = DataKeyword(
+            'DRAG_COEFF', drag_coeff, mandatory=False)
 
         self.keywords = [
             self._comment,
@@ -843,16 +977,40 @@ class DataBlockSpacecraftParameters(DataBlock, KeywordContainer):
 
 class DataBlockCovarianceMatrix(DataBlock, KeywordContainer):
 
-    """Covariance matrix block for data section."""
+    """Covariance matrix block for data section.
 
-    def __init__(
-        self, comment=None, cov_ref_frame=None,
-        cx_x=None,
-        cy_x=None,     cy_y=None,
-        cz_x=None,     cz_y=None,     cz_z=None,
-        cx_dot_x=None, cx_dot_y=None, cx_dot_z=None, cx_dot_x_dot=None,
-        cy_dot_x=None, cy_dot_y=None, cy_dot_z=None, cy_dot_x_dot=None, cy_dot_y_dot=None,
-        cz_dot_x=None, cz_dot_y=None, cz_dot_z=None, cz_dot_x_dot=None, cz_dot_y_dot=None, cz_dot_z_dot=None):
+    :param str comment: Single or multi-line comment.
+    :param cov_ref_frame: Covariance reference frame.
+    :type cov_ref_frame: :py:class:`~odmpy.opm.RefFrame`
+    :param float cx_x: :math:`x_{x}` [km\ :sup:`2`\ ].
+    :param float cy_x: :math:`y_{x}` [km\ :sup:`2`\ ].
+    :param float cy_y: :math:`y_{y}` [km\ :sup:`2`\ ].
+    :param float cz_x: :math:`z_{x}` [km\ :sup:`2`\ ].
+    :param float cz_y: :math:`z_{y}` [km\ :sup:`2`\ ].
+    :param float cz_z: :math:`z_{z}` [km\ :sup:`2`\ ].
+    :param float cx_dot_x: :math:`\dot{x}_{x}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cx_dot_y: :math:`\dot{x}_{y}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cx_dot_z: :math:`\dot{x}_{z}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cx_dot_x_dot: :math:`\dot{x}_\dot{x}` [km\ :sup:`2`\ s\ :sup:`-2`].
+    :param float cy_dot_x: :math:`\dot{y}_{x}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cy_dot_y: :math:`\dot{y}_{y}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cy_dot_z: :math:`\dot{y}_{z}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cy_dot_x_dot: :math:`\dot{y}_\dot{x}` [km\ :sup:`2`\ s\ :sup:`-2`].
+    :param float cy_dot_y_dot: :math:`\dot{y}_\dot{y}` [km\ :sup:`2`\ s\ :sup:`-2`].
+    :param float cz_dot_x: :math:`\dot{z}_{x}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cz_dot_y: :math:`\dot{z}_{y}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cz_dot_z: :math:`\dot{z}_{z}` [km\ :sup:`2`\ s\ :sup:`-1`].
+    :param float cz_dot_x_dot: :math:`\dot{z}_\dot{x}` [km\ :sup:`2`\ s\ :sup:`-2`].
+    :param float cz_dot_y_dot: :math:`\dot{z}_\dot{y}` [km\ :sup:`2`\ s\ :sup:`-2`].
+    :param float cz_dot_z_dot: :math:`\dot{z}_\dot{z}` [km\ :sup:`2`\ s\ :sup:`-2`].
+
+    .. note::
+
+       Due to the large number of covariance parameters, the method signature
+       accepts them as `**cargs`.
+    """
+
+    def __init__(self, comment=None, cov_ref_frame=None, **cargs):
         """Initialise covariance matrix data block.
 
         Required keywords:
@@ -883,45 +1041,45 @@ class DataBlockCovarianceMatrix(DataBlock, KeywordContainer):
         - cov_ref_frame
         """
         super().__init__()
-        self._comment       = DataKeyword('COMMENT', comment, mandatory=False)
+        self._comment = DataKeyword('COMMENT', comment, mandatory=False)
         self._cov_ref_frame = DataKeyword('COV_REF_FRAME', cov_ref_frame,
                                           mandatory=False, formatter=lambda x: x.value)
-        self._cx_x          = DataKeyword('CX_X', cx_x, units='km**2')
-        self._cy_x          = DataKeyword('CY_X', cy_x, units='km**2')
-        self._cy_y          = DataKeyword('CY_Y', cy_y, units='km**2')
-        self._cz_x          = DataKeyword('CZ_X', cz_x, units='km**2')
-        self._cz_y          = DataKeyword('CZ_Y', cz_y, units='km**2')
-        self._cz_z          = DataKeyword('CZ_Z', cz_z, units='km**2')
-        self._cx_dot_x      = DataKeyword('CX_DOT_X', cx_dot_x,
-                                          units='km**2/s')
-        self._cx_dot_y      = DataKeyword('CX_DOT_Y', cx_dot_y,
-                                          units='km**2/s')
-        self._cx_dot_z      = DataKeyword('CX_DOT_Z', cx_dot_z,
-                                          units='km**2/s')
-        self._cx_dot_x_dot  = DataKeyword('CX_DOT_X_DOT', cx_dot_x_dot,
-                                          units='km**2/s**2')
-        self._cy_dot_x      = DataKeyword('CY_DOT_X', cy_dot_x,
-                                          units='km**2/s')
-        self._cy_dot_y      = DataKeyword('CY_DOT_Y', cy_dot_y,
-                                          units='km**2/s')
-        self._cy_dot_z      = DataKeyword('CY_DOT_Z', cy_dot_z,
-                                          units='km**2/s')
-        self._cy_dot_x_dot  = DataKeyword('CY_DOT_X_DOT', cy_dot_x_dot,
-                                          units='km**2/s**2')
-        self._cy_dot_y_dot  = DataKeyword('CY_DOT_Y_DOT', cy_dot_y_dot,
-                                          units='km**2/s**2')
-        self._cz_dot_x      = DataKeyword('CZ_DOT_X', cz_dot_x,
-                                          units='km**2/s')
-        self._cz_dot_y      = DataKeyword('CZ_DOT_Y', cz_dot_y,
-                                          units='km**2/s')
-        self._cz_dot_z      = DataKeyword('CZ_DOT_Z', cz_dot_z,
-                                          units='km**2/s')
-        self._cz_dot_x_dot  = DataKeyword('CZ_DOT_X_DOT', cz_dot_x_dot,
-                                          units='km**2/s**2')
-        self._cz_dot_y_dot  = DataKeyword('CZ_DOT_Y_DOT', cz_dot_y_dot,
-                                          units='km**2/s**2')
-        self._cz_dot_z_dot  = DataKeyword('CZ_DOT_Z_DOT', cz_dot_z_dot,
-                                          units='km**2/s**2')
+        self._cx_x = DataKeyword('CX_X', cargs['cx_x'], units='km**2')
+        self._cy_x = DataKeyword('CY_X', cargs['cy_x'], units='km**2')
+        self._cy_y = DataKeyword('CY_Y', cargs['cy_y'], units='km**2')
+        self._cz_x = DataKeyword('CZ_X', cargs['cz_x'], units='km**2')
+        self._cz_y = DataKeyword('CZ_Y', cargs['cz_y'], units='km**2')
+        self._cz_z = DataKeyword('CZ_Z', cargs['cz_z'], units='km**2')
+        self._cx_dot_x = DataKeyword(
+            'CX_DOT_X', cargs['cx_dot_x'], units='km**2/s')
+        self._cx_dot_y = DataKeyword(
+            'CX_DOT_Y', cargs['cx_dot_y'], units='km**2/s')
+        self._cx_dot_z = DataKeyword(
+            'CX_DOT_Z', cargs['cx_dot_z'], units='km**2/s')
+        self._cx_dot_x_dot = DataKeyword(
+            'CX_DOT_X_DOT', cargs['cx_dot_x_dot'], units='km**2/s**2')
+        self._cy_dot_x = DataKeyword(
+            'CY_DOT_X', cargs['cy_dot_x'], units='km**2/s')
+        self._cy_dot_y = DataKeyword(
+            'CY_DOT_Y', cargs['cy_dot_y'], units='km**2/s')
+        self._cy_dot_z = DataKeyword(
+            'CY_DOT_Z', cargs['cy_dot_z'], units='km**2/s')
+        self._cy_dot_x_dot = DataKeyword(
+            'CY_DOT_X_DOT', cargs['cy_dot_x_dot'], units='km**2/s**2')
+        self._cy_dot_y_dot = DataKeyword(
+            'CY_DOT_Y_DOT', cargs['cy_dot_y_dot'], units='km**2/s**2')
+        self._cz_dot_x = DataKeyword(
+            'CZ_DOT_X', cargs['cz_dot_x'], units='km**2/s')
+        self._cz_dot_y = DataKeyword(
+            'CZ_DOT_Y', cargs['cz_dot_y'], units='km**2/s')
+        self._cz_dot_z = DataKeyword(
+            'CZ_DOT_Z', cargs['cz_dot_z'], units='km**2/s')
+        self._cz_dot_x_dot = DataKeyword(
+            'CZ_DOT_X_DOT', cargs['cz_dot_x_dot'], units='km**2/s**2')
+        self._cz_dot_y_dot = DataKeyword(
+            'CZ_DOT_Y_DOT', cargs['cz_dot_y_dot'], units='km**2/s**2')
+        self._cz_dot_z_dot = DataKeyword(
+            'CZ_DOT_Z_DOT', cargs['cz_dot_z_dot'], units='km**2/s**2')
 
         self.keywords = [
             self._comment,
@@ -1136,11 +1294,22 @@ class DataBlockCovarianceMatrix(DataBlock, KeywordContainer):
 
 class DataBlockManeuverParameters(DataBlock, KeywordContainer):
 
-    """Maneuver parameters block for data section."""
+    """Maneuver parameters block for data section.
 
-    def __init__(self, comment=None, man_epoch_ignition=None,
-                 man_duration=None, man_delta_mass=None, man_ref_frame=None,
-                 man_dv_1=None, man_dv_2=None, man_dv_3=None):
+    :param man_epoch_ignition: Epoch of ignition.
+    :type man_epoch_ignition: :py:class:`~datetime.datetime`-like object
+    :param float man_duration: Maneuver duration. [s]
+    :param float man_delta_mass: Mass change during maneuver. [kg]
+    :param man_ref_frame: Coordinate system for velocity increment vector.
+    :type man_ref_frame: :py:class:`~odmpy.opm.RefFrame`
+    :param float man_dv_1: 1st component of velocity increment vector [km/s].
+    :param float man_dv_2: 2nd component of velocity increment vector [km/s].
+    :param float man_dv_3: 3rd component of velocity increment vector [km/s].
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, man_epoch_ignition, man_duration, man_delta_mass,
+                 man_ref_frame, man_dv_1, man_dv_2, man_dv_3, comment=None):
         """Initialise maneuver parameters data block.
 
         Required keywords:
@@ -1163,8 +1332,10 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
             validator=validate_date)
         self._man_duration = DataKeyword('MAN_DURATION', man_duration,
                                          units='s')
-        self._man_delta_mass = DataKeyword('MAN_DELTA_MASS', man_delta_mass,
-                                           units='kg')
+        self._man_delta_mass = DataKeyword(
+            'MAN_DELTA_MASS', man_delta_mass, units='kg',
+            validator=lambda x: x < 0)
+
         self._man_ref_frame = DataKeyword('MAN_REF_FRAME', man_ref_frame,
                                           formatter=lambda x: x.value)
         self._man_dv_1 = DataKeyword('MAN_DV_1', man_dv_1, units='km/s')
@@ -1259,7 +1430,21 @@ class DataBlockContainer:
 
 
 class Data:
-    """OPM Data object (mandatory)."""
+
+    """OPM Data object (mandatory).
+
+    :param state_vector: State vector block
+    :type state_vector: :py:class:`~odmpy.opm.DataBlockStateVector`
+    :param spacecraft_parameters: Spacecraft parameters block
+    :type spacecraft_parameters: :py:class:`~odmpy.opm.DataBlockSpacecraftParameters`
+    :param keplerian_elements: Keplerian elements block
+    :type keplerian_elements: :py:class:`~odmpy.opm.DataBlockKeplerianElements`
+    :param covariance_matrix: Covariance matrix block
+    :type covariance_matrix: :py:class:`~odmpy.opm.DataBlockCovarianceMatrix`
+    :param maneuver_parameters: Maneuver parameters block
+    :type maneuver_parameters: :py:class:`~odmpy.opm.DataBlockManeuverParameters`
+    """
+
     def __init__(self, state_vector, spacecraft_parameters=None,
                  keplerian_elements=None, covariance_matrix=None,
                  maneuver_parameters=None):
@@ -1311,6 +1496,14 @@ class Data:
         ]
 
     def validate_blocks(self):
+        """Ensure mandatory blocks are present, prerequisites fulfilled, and
+        types checked.
+
+        :raises ValueError: if a given block is a list but repetition for the
+            block type is disallowed.
+        :raises TypeError: if data block is not sublass of
+            :py:class:`odmpy.opm.DataBlock` or a valid list of them.
+        """
         for bc in self.blocks:
             if bc.mandatory and bc.block is None:
                 raise MissingBlockError(bc.name)
@@ -1382,16 +1575,20 @@ class Opm:
 
     """Represent complete OPM.
 
-    Also handles file writing.
+    :param header: Instance of :py:class:`odmpy.opm.Header`
+    :param metadata: Instance of :py:class:`odmpy.opm.Metadata`
+    :param data: Instance of :py:class:`odmpy.opm.Data`
+    :param dict user_defined: User defined variables
+
     """
 
     def __init__(self, header, metadata, data, user_defined=None):
         """Initialise Opm
 
-        header, metadata, and data are instances of Header, Metadata,
+        `header`, `metadata`, and `data` are instances of Header, Metadata,
         and Data respectively.
 
-        user_defined is a dictionary of parameters. The USER_DEFINED_ prefix
+        `user_defined` is a dictionary of parameters. The USER_DEFINED_ prefix
         is added automatically.
         """
         self.header = header
@@ -1404,9 +1601,12 @@ class Opm:
         self.data.validate_blocks()
 
     def write(self, fp):
+        """Write ASCII-formatted OPM file to `fp` (a ``.write()``-supporting
+        :py:term:`file-like object`)"""
         fp.writelines(suffix('\n', self.output()))
 
     def output(self):
+        """Return a line iterator for an ASCII-formatted OPM file."""
         for line in self.header.create_output_align_equals():
             yield line
         yield ''
@@ -1416,7 +1616,8 @@ class Opm:
         yield ''
         for bc in self.data.blocks:
             if bc.block is not None:
-                yield 'COMMENT %s' % (bc.name if bc.block.name is None else bc.block.name)
+                yield 'COMMENT %s' % (bc.name if bc.block.name is None
+                                      else bc.block.name)
                 for line in bc.block.create_output_align_decimal():
                     yield line
                 yield ''

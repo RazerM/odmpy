@@ -1,5 +1,5 @@
 [run]
-source = orbitdatamessages
+source = odmpy
 [report]
 exclude_lines =
     def __repr__
