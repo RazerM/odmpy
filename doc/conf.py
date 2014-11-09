@@ -264,12 +264,3 @@ texinfo_documents = [
 
 # intersphinx
 intersphinx_mapping = {'python': ('http://docs.python.org/3.2', None)}
-
-
-def process_signature(app, what, name, obj, options, signature, return_annotation):
-    print(app, what, name, obj, options, repr(signature), sep='\n')
-    # return None
-
-
-def setup(app):
-    app.connect('autodoc-process-signature', process_signature)

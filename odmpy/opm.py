@@ -293,7 +293,10 @@ class KeywordContainer:
         self.keywords = list()
 
     def validate_keywords(self):
-        """Ensure keywords are valid and set (if mandatory).
+        """Ensures keywords are valid and set (if mandatory).
+
+        :raises odmpy.opm.MissingKeywordError: if a mandatory keyword `is None`
+        :raises ValueError: if keyword validation fails
 
         This method should be called internally before data meant for output
         is produced.

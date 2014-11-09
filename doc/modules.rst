@@ -1,6 +1,6 @@
-**********************
-odmpy Module Reference
-**********************
+****************
+Module Reference
+****************
 
 .. toctree::
    :maxdepth: 2
