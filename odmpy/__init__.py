@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 __author__ = 'Frazer McLean <frazer@frazermclean.co.uk>'
 __version__ = '0.1.8.dev0'
