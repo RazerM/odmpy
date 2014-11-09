@@ -15,14 +15,15 @@ from numbers import Number
 # from orbitdatamessages.opm import * considered harmful
 # Even so, make sure only core functionality gets imported
 __all__ = [
+    'Opm',
+    'Header',
+    'Metadata',
+    'Data',
     'DataBlockCovarianceMatrix',
     'DataBlockKeplerianElements',
     'DataBlockManeuverParameters',
     'DataBlockSpacecraftParameters',
     'DataBlockStateVector',
-    'Header',
-    'Metadata',
-    'Opm',
     'RefFrame',
     'TimeSystem',
 ]
@@ -112,6 +113,31 @@ class TimeSystem(Enum):
 
 
 class RefFrame(Enum):
+    """Reference frame.
+
+    EME2000
+      Earth Mean Equator and Equinox of J2000
+    GCRF
+      Geocentric Celestial Reference Frame
+    GRC
+      Greenwich Rotating Coordinates
+    ICRF
+      International Celestial Reference Frame
+    ITRF2000
+      International Terrestrial Reference Frame 2000
+    ITRF-93
+      International Terrestrial Reference Frame 1993
+    ITRF-97
+      International Terrestrial Reference Frame 1997
+    MCI
+      Mars Centered Inertial
+    TDR
+      True of Date, Rotating
+    TEME
+      True Equator Mean Equinox (see below)
+    TOD
+      True of Date
+    """
     EME2000  = 'EME2000'
     GCRF     = 'GCRF'
     GRC      = 'GRC'
@@ -317,10 +343,13 @@ class KeywordContainer:
 
 class Header(KeywordContainer):
 
-    """OPM Header object (mandatory).
+    """OPM Header object.
 
-    Properties are used so that instance variables can be set with assignment,
-    but the full keyword object is returned when read.
+    :param str opm_version: CCSDS OPM version.
+    :param creation_date: Creation date. Defaults to current time.
+    :type creation_date: :py:class:`~datetime.datetime`-like object
+    :param str originator: Creating agency or operator.
+    :param str comment: Single or multi-line comment.
     """
 
     def __init__(self, originator, opm_version='2.0',
@@ -392,11 +421,22 @@ class Header(KeywordContainer):
 
 class Metadata(KeywordContainer):
 
-    """OPM Metadata object (mandatory)."""
+    """OPM Metadata object.
 
-    def __init__(self, object_name=None, object_id=None, center_name=None,
-                 ref_frame=None, ref_frame_epoch=None, time_system=None,
-                 comment=None):
+    :param str object_name: Spacecraft name.
+    :param str object_id: Object identifier. International Designator recommended.
+    :param str center_name: Origin of reference frame.
+    :param ref_frame: Reference frame in which state is defined.
+    :type ref_frame: :py:class:`~orbitdatamessages.opm.RefFrame`
+    :param time_system: Time system used for state vector, maneuver, and covariance data.
+    :type time_system: :py:class:`~orbitdatamessages.opm.TimeSystem`
+    :param ref_frame_epoch: Epoch of reference frame.
+    :type ref_frame_epoch: :py:class:`~datetime.datetime`-like object
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, object_name, object_id, center_name, ref_frame,
+                 time_system, ref_frame_epoch=None, comment=None):
         """Initialise OPM Metadata section.
 
         Required keywords:
@@ -508,10 +548,20 @@ class DataBlock:
 
 class DataBlockStateVector(DataBlock, KeywordContainer):
 
-    """State vector block for OPM data section."""
+    """State vector block for OPM data section.
 
-    def __init__(self, comment=None, epoch=None, x=None, y=None, z=None,
-                 x_dot=None, y_dot=None, z_dot=None):
+    :param epoch: Epoch of state vector.
+    :type epoch: :py:class:`~datetime.datetime`-like object
+    :param float x: :math:`x` [km]
+    :param float y: :math:`y` [km]
+    :param float z: :math:`z` [km]
+    :param float x_dot: :math:`\dot{x}`
+    :param float y_dot: :math:`\dot{y}` [km/s]
+    :param float z_dot: :math:`\dot{z}` [km/s]
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, epoch, x, y, z, x_dot, y_dot, z_dot, comment=None):
         """Initialise state vector data block.
 
         Required keywords:
@@ -616,11 +666,26 @@ class DataBlockStateVector(DataBlock, KeywordContainer):
 
 class DataBlockKeplerianElements(DataBlock, KeywordContainer):
 
-    """Keplerian elements block for OPM data section."""
+    """Keplerian elements block for OPM data section.
 
-    def __init__(self, comment=None, semi_major_axis=None, eccentricity=None,
-                 inclination=None, ra_of_asc_node=None, arg_of_pericenter=None,
-                 true_anomaly=None, mean_anomaly=None, gm=None):
+    :param float semi_major_axis: Semimajor axis [km]
+    :param float eccentricity: Eccentricity [--]
+    :param float inclination: Inclination [deg]
+    :param float ra_of_asc_node: Right ascension of the ascending node [deg]
+    :param float arg_of_pericenter: Argument of pericenter [deg]
+    :param float true_anomaly: True anomaly [deg]
+    :param float mean_anomaly: Mean anomaly [deg]
+    :param float gm: Gravitational coefficient :math:`[\\text{km}^{3}\cdot\\text{s}^{-2}]`
+    :param str comment: Single or multi-line comment.
+
+    .. note::
+
+       Either or
+    """
+
+    def __init__(self, semi_major_axis, eccentricity, inclination,
+                 ra_of_asc_node, arg_of_pericenter, gm, true_anomaly=None,
+                 mean_anomaly=None, comment=None):
         """Initialise keplerian elements data block.
 
         Required keywords:
@@ -847,7 +912,33 @@ class DataBlockSpacecraftParameters(DataBlock, KeywordContainer):
 
 class DataBlockCovarianceMatrix(DataBlock, KeywordContainer):
 
-    """Covariance matrix block for data section."""
+    """Covariance matrix block for data section.
+
+    :param str comment: Single or multi-line comment (optional)
+    :param cov_ref_frame: Covariance reference frame (optional)
+    :type cov_ref_frame: opm.RefFrame
+    :param float cx_x: :math:`x_{x}`
+    :param float cy_x: :math:`y_{x}`
+    :param float cy_y: :math:`y_{y}`
+    :param float cz_x: :math:`z_{x}`
+    :param float cz_y: :math:`z_{y}`
+    :param float cz_z: :math:`z_{z}`
+    :param float cx_dot_x: :math:`\dot{x}_{x}`
+    :param float cx_dot_y: :math:`\dot{x}_{y}`
+    :param float cx_dot_z: :math:`\dot{x}_{z}`
+    :param float cx_dot_x_dot: :math:`\dot{x}_\dot{x}`
+    :param float cy_dot_x: :math:`\dot{y}_{x}`
+    :param float cy_dot_y: :math:`\dot{y}_{y}`
+    :param float cy_dot_z: :math:`\dot{y}_{z}`
+    :param float cy_dot_x_dot: :math:`\dot{y}_\dot{x}`
+    :param float cy_dot_y_dot: :math:`\dot{y}_\dot{y}`
+    :param float cz_dot_x: :math:`\dot{z}_{x}`
+    :param float cz_dot_y: :math:`\dot{z}_{y}`
+    :param float cz_dot_z: :math:`\dot{z}_{z}`
+    :param float cz_dot_x_dot: :math:`\dot{z}_\dot{x}`
+    :param float cz_dot_y_dot: :math:`\dot{z}_\dot{y}`
+    :param float cz_dot_z_dot: :math:`\dot{z}_\dot{z}`
+    """
 
     def __init__(
         self, comment=None, cov_ref_frame=None,
@@ -1263,7 +1354,9 @@ class DataBlockContainer:
 
 
 class Data:
+
     """OPM Data object (mandatory)."""
+
     def __init__(self, state_vector, spacecraft_parameters=None,
                  keplerian_elements=None, covariance_matrix=None,
                  maneuver_parameters=None):
@@ -1387,15 +1480,21 @@ class Opm:
     """Represent complete OPM.
 
     Also handles file writing.
+
+    :param header: Instance of :py:class:`orbitdatamessages.opm.Header`
+    :param metadata: Instance of :py:class:`orbitdatamessages.opm.Metadata`
+    :param data: Instance of :py:class:`orbitdatamessages.opm.Data`
+    :param dict user_defined: User defined variables
+
     """
 
     def __init__(self, header, metadata, data, user_defined=None):
         """Initialise Opm
 
-        header, metadata, and data are instances of Header, Metadata,
+        `header`, `metadata`, and `data` are instances of Header, Metadata,
         and Data respectively.
 
-        user_defined is a dictionary of parameters. The USER_DEFINED_ prefix
+        `user_defined` is a dictionary of parameters. The USER_DEFINED_ prefix
         is added automatically.
         """
         self.header = header
@@ -1408,9 +1507,12 @@ class Opm:
         self.data.validate_blocks()
 
     def write(self, fp):
+        """Write ASCII-formatted OPM file to `fp` (a ``.write()``-supporting
+        :py:term:`file-like object`)"""
         fp.writelines(suffix('\n', self.output()))
 
     def output(self):
+        """Return a line iterator for an ASCII-formatted OPM file."""
         for line in self.header.create_output_align_equals():
             yield line
         yield ''
@@ -1420,7 +1522,8 @@ class Opm:
         yield ''
         for bc in self.data.blocks:
             if bc.block is not None:
-                yield 'COMMENT %s' % (bc.name if bc.block.name is None else bc.block.name)
+                yield 'COMMENT %s' % (bc.name if bc.block.name is None
+                                      else bc.block.name)
                 for line in bc.block.create_output_align_decimal():
                     yield line
                 yield ''

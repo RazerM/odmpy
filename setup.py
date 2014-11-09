@@ -3,7 +3,7 @@ from setuptools import setup, Command, find_packages
 
 import re
 
-INIT_FILE = 'orbitdatamessages/__init__.py'
+INIT_FILE = 'odmpy/__init__.py'
 init_data = open(INIT_FILE).read()
 
 metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", init_data))
@@ -16,7 +16,7 @@ AUTHOR, EMAIL = re.match(r'(.*) <(.*)>', AUTHOR_EMAIL).groups()
 
 
 class PyTest(Command):
-    """Allow 'python3 setup.py test' to run without first installing pytest"""
+    """Allow 'python setup.py test' to run without first installing pytest"""
     user_options = []
     def initialize_options(self):
         pass
@@ -30,13 +30,13 @@ class PyTest(Command):
         raise SystemExit(errno)
 
 setup(
-    name='orbit_data_messages',
+    name='odmpy',
     version=VERSION,
     description='Create valid ASCII OPM, OMM, and OEM files.',
     long_description=open('README').read(),
     author=AUTHOR,
     author_email=EMAIL,
-    url='https://github.com/RazerM/orbit-data-messages',
+    url='https://github.com/RazerM/odmpy',
     packages=find_packages(),
     cmdclass={'test': PyTest},
     classifiers=[

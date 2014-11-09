@@ -1,6 +1,6 @@
 import unittest
 
-import orbitdatamessages.opm as opm
+import odmpy.opm as opm
 
 
 class TestHelpers(unittest.TestCase):
