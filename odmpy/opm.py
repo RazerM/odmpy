@@ -3,7 +3,7 @@ Module for creating valid OPM files as specified in the Orbit Data Message
 Recommended Standard CCSDS 502.0-B-2
 
 Recommended import syntax:
-import orbitdatamessages.opm as opm
+import odmpy.opm as opm
 """
 import re
 import textwrap
@@ -12,7 +12,7 @@ from enum import Enum
 from math import floor, log10
 from numbers import Number
 
-# from orbitdatamessages.opm import * considered harmful
+# from odmpy.opm import * considered harmful
 # Even so, make sure only core functionality gets imported
 __all__ = [
     'Opm',
@@ -427,9 +427,9 @@ class Metadata(KeywordContainer):
     :param str object_id: Object identifier. International Designator recommended.
     :param str center_name: Origin of reference frame.
     :param ref_frame: Reference frame in which state is defined.
-    :type ref_frame: :py:class:`~orbitdatamessages.opm.RefFrame`
+    :type ref_frame: :py:class:`~odmpy.opm.RefFrame`
     :param time_system: Time system used for state vector, maneuver, and covariance data.
-    :type time_system: :py:class:`~orbitdatamessages.opm.TimeSystem`
+    :type time_system: :py:class:`~odmpy.opm.TimeSystem`
     :param ref_frame_epoch: Epoch of reference frame.
     :type ref_frame_epoch: :py:class:`~datetime.datetime`-like object
     :param str comment: Single or multi-line comment.
@@ -675,12 +675,14 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
     :param float arg_of_pericenter: Argument of pericenter [deg]
     :param float true_anomaly: True anomaly [deg]
     :param float mean_anomaly: Mean anomaly [deg]
-    :param float gm: Gravitational coefficient :math:`[\\text{km}^{3}\cdot\\text{s}^{-2}]`
+    :param float gm: Gravitational coefficient
+        :math:`[\\text{km}^{3}\cdot\\text{s}^{-2}]`
     :param str comment: Single or multi-line comment.
 
     .. note::
 
-       Either or
+       Either `true_anomaly` or `mean_anomaly` must be set before the block is
+       validated (usually instigated by :py:class:`odmpy.opm.Opm`)
     """
 
     def __init__(self, semi_major_axis, eccentricity, inclination,
@@ -814,10 +816,18 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
 
 class DataBlockSpacecraftParameters(DataBlock, KeywordContainer):
 
-    """Spacecraft parameters block for OPM data section."""
+    """Spacecraft parameters block for OPM data section.
 
-    def __init__(self, comment=None, mass=None, solar_rad_area=None,
-                 solar_rad_coeff=None, drag_area=None, drag_coeff=None):
+    :param float mass: Spacecraft mass. [kg]
+    :param float solar_rad_area: Solar radiation pressure area :math:`[\\text{m}^{2}]`.
+    :param float solar_rad_coeff: Solar radiation pressure coefficient [--].
+    :param float drag_area: Drag area :math:`[\\text{m}^{2}]`.
+    :param float drag_coeff: Drag coefficient [--].
+    :param str comment: Single or multi-line comment.
+    """
+
+    def __init__(self, mass, solar_rad_area, solar_rad_coeff, drag_area,
+                 drag_coeff, comment=None):
         """Initialise spacecraft parameters data block.
 
         Required keywords:
@@ -1481,9 +1491,9 @@ class Opm:
 
     Also handles file writing.
 
-    :param header: Instance of :py:class:`orbitdatamessages.opm.Header`
-    :param metadata: Instance of :py:class:`orbitdatamessages.opm.Metadata`
-    :param data: Instance of :py:class:`orbitdatamessages.opm.Data`
+    :param header: Instance of :py:class:`odmpy.opm.Header`
+    :param metadata: Instance of :py:class:`odmpy.opm.Metadata`
+    :param data: Instance of :py:class:`odmpy.opm.Data`
     :param dict user_defined: User defined variables
 
     """
