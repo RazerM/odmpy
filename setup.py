@@ -43,7 +43,8 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Astronomy',
-        'License :: OSI Approved :: MIT License'
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.4'
     ],
     license=LICENSE,
     extras_require={
