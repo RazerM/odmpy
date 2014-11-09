@@ -13,14 +13,4 @@ Currently, only the orbital parameter message (OPM) module has been implemented.
 $ pip install odmpy
 ```
 
-### Testing
-
-```bash
-$ python setup.py test
-```
-
-### Usage
-
-```python
-import odmpy.opm as opm
-```
+### [Documentation](http://pythonhosted.org/odmpy/)
