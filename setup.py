@@ -57,7 +57,7 @@ setup(
         'Programming Language :: Python :: 3.4'
     ],
     license=LICENSE,
-    install_requires=requires
+    install_requires=requires,
     extras_require={
         'test': ['pytest']
     }
