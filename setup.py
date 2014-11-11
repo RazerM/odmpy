@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import re
+import sys
+
 from setuptools import setup, Command, find_packages
 
-import re
 
 INIT_FILE = 'odmpy/__init__.py'
 init_data = open(INIT_FILE).read()
@@ -14,6 +16,10 @@ LICENSE = metadata['license']
 
 AUTHOR, EMAIL = re.match(r'(.*) <(.*)>', AUTHOR_EMAIL).groups()
 
+if sys.version_info[:2] < (3, 4):
+    requires = ['enum34']
+else:
+    requires = []
 
 class PyTest(Command):
     """Allow 'python setup.py test' to run without first installing pytest"""
@@ -44,9 +50,14 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Astronomy',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3'
+        'Programming Language :: Python :: 3.1'
+        'Programming Language :: Python :: 3.2'
+        'Programming Language :: Python :: 3.3'
         'Programming Language :: Python :: 3.4'
     ],
     license=LICENSE,
+    install_requires=requires
     extras_require={
         'test': ['pytest']
     }
