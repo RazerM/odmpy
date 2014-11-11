@@ -50,10 +50,11 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Astronomy',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3'
-        'Programming Language :: Python :: 3.1'
-        'Programming Language :: Python :: 3.2'
-        'Programming Language :: Python :: 3.3'
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.0',
+        'Programming Language :: Python :: 3.1',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4'
     ],
     license=LICENSE,
