@@ -26,7 +26,7 @@ Installation
    :target: https://codecov.io/github/RazerM/odmpy
 .. |PyPI Version| image:: http://img.shields.io/pypi/v/odmpy.svg?style=flat-square
    :target: https://pypi.python.org/pypi/odmpy/
-.. |Python Version| image:: http://img.shields.io/badge/python-3.4%2B-brightgreen.svg?style=flat-square
-   :target: https://www.python.org/download/releases/3.4.0/
+.. |Python Version| image:: http://img.shields.io/badge/python-3.0%2B-brightgreen.svg?style=flat-square
+   :target: https://www.python.org/download/releases/3.0/
 .. |MIT License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
    :target: https://raw.githubusercontent.com/RazerM/odmpy/master/LICENSE
