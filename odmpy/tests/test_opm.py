@@ -20,7 +20,8 @@ class TestOpmSections(unittest.TestCase):
         self.valid_header = opm.Header(
             originator='ESA',
             opm_version='2.0',
-            creation_date=datetime(2011,3,1,1,2,3)
+            creation_date=datetime(2011,3,1,1,2,3),
+            comment='Test comment\nline 2'
         )
 
         self.valid_metadata = opm.Metadata(
@@ -283,7 +284,6 @@ class TestOpmSections(unittest.TestCase):
 
         cm = self.valid_covariance_matrix
 
-
         data = opm.Data(
             state_vector=[sv, sv],
             spacecraft_parameters=sp,
@@ -340,6 +340,8 @@ class TestOpmSections(unittest.TestCase):
 
     def test_output(self):
         """Fail test if output doesn't match previously created file."""
+        randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
+
         data = opm.Data(
             state_vector=self.valid_state_vector,
             spacecraft_parameters=self.valid_spacecraft_parameters,
@@ -347,10 +349,13 @@ class TestOpmSections(unittest.TestCase):
             covariance_matrix=self.valid_covariance_matrix,
             maneuver_parameters=self.valid_maneuver_parameters)
 
+        user_defined = {'TEST': randnum(), 'TEST2': 'String'}
+
         opm_obj = opm.Opm(
             header=self.valid_header,
             metadata=self.valid_metadata,
-            data=data)
+            data=data,
+            user_defined=user_defined)
 
         output_hash = hashlib.sha256()
         for line in opm_obj.output():
@@ -363,6 +368,8 @@ class TestOpmSections(unittest.TestCase):
         self.assertEqual(output_hash.hexdigest(), valid_hash.hexdigest())
 
     def test_write(self):
+        randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
+
         data = opm.Data(
             state_vector=self.valid_state_vector,
             spacecraft_parameters=self.valid_spacecraft_parameters,
@@ -370,10 +377,13 @@ class TestOpmSections(unittest.TestCase):
             covariance_matrix=self.valid_covariance_matrix,
             maneuver_parameters=self.valid_maneuver_parameters)
 
+        user_defined = {'TEST': randnum(), 'TEST2': 'String'}
+
         opm_obj = opm.Opm(
             header=self.valid_header,
             metadata=self.valid_metadata,
-            data=data)
+            data=data,
+            user_defined=user_defined)
 
         file_hash = hashlib.sha256()
         with TemporaryFile(mode='w+') as f:
@@ -387,6 +397,7 @@ class TestOpmSections(unittest.TestCase):
             for line in f.read().splitlines():
                 valid_hash.update(line.encode('utf-8'))
         self.assertEqual(file_hash.hexdigest(), valid_hash.hexdigest())
+
 
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
