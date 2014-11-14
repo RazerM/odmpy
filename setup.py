@@ -17,7 +17,7 @@ LICENSE = metadata['license']
 AUTHOR, EMAIL = re.match(r'(.*) <(.*)>', AUTHOR_EMAIL).groups()
 
 if sys.version_info[:2] < (3, 4):
-    requires = ['enum34']
+    requires = ['enum34', 'pathlib']
 else:
     requires = []
 
