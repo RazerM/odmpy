@@ -55,7 +55,7 @@ def _mant_exp(num):
     return (mantissa, int(exponent))
 
 
-def format_number(number):
+def _align_decimal(number):
     """Format number for ODM output.
 
     Number is truncated to MAX_DIGITS if required. Numbers are given leading
@@ -95,6 +95,16 @@ def validate_date(date):
 def validate_object_id(object_id):
     match = re.match('^[0-9]{4}\-[0-9]{3}[A-Z]{1,3}$', object_id)
     return True if match else False
+
+
+def format_date(date):
+    return date.isoformat(sep='T')
+
+def format_date_yyyyddd(date):
+    if date.microsecond == 0:
+        return date.strftime('%Y-%jT%H:%M:%S')
+    else:
+        return date.strftime('%Y-%jT%H:%M:%S.%f')
 
 
 class TimeSystem(Enum):
@@ -342,7 +352,7 @@ class KeywordContainer:
         # Remove leading space
         aligned_numbers = iter(textwrap.dedent(
             '\n'.join(
-                ut0.sub(r'\1', format_number(x)) for x in numbers
+                ut0.sub(r'\1', _align_decimal(x)) for x in numbers
             )).splitlines())
 
         longest_keyword_len = len(
@@ -414,7 +424,7 @@ class Header(KeywordContainer):
 
         self._creation_date = Keyword(
             'CREATION_DATE', creation_date,
-            formatter=lambda x: x.isoformat(sep='T'), validator=validate_date)
+            formatter=format_date, validator=validate_date)
 
         self._originator = Keyword(
             'ORIGINATOR', originator, validator=validate_string)
@@ -506,7 +516,7 @@ class Metadata(KeywordContainer):
 
         self._ref_frame_epoch = Keyword(
             'REF_FRAME_EPOCH', ref_frame_epoch, mandatory=False,
-            formatter=lambda x: x.isoformat(sep='T'), validator=validate_date)
+            formatter=format_date, validator=validate_date)
 
         self._time_system = Keyword(
             'TIME_SYSTEM', time_system, formatter=lambda x: x.value)
@@ -623,7 +633,7 @@ class DataBlockStateVector(DataBlock, KeywordContainer):
         super().__init__()
         self._comment = DataKeyword('COMMENT', comment, mandatory=False)
         self._epoch   = DataKeyword(
-            'EPOCH', epoch, formatter=lambda x: x.isoformat(sep='T'),
+            'EPOCH', epoch, formatter=format_date,
             validator=validate_date)
         self._x       = DataKeyword('X', x, units='km')
         self._y       = DataKeyword('Y', y, units='km')
@@ -788,6 +798,33 @@ class DataBlockKeplerianElements(DataBlock, KeywordContainer):
             self._mean_anomaly,
             self._gm
         ]
+
+
+    def validate_keywords(self):
+        """Ensures keywords are valid and set (if mandatory).
+
+        :raises odmpy.opm.MissingKeywordError: if a mandatory keyword `is None`
+        :raises ValueError: if keyword validation fails
+
+        This method should be called internally before data meant for output
+        is produced.
+
+        This method overrides KeywordContainer.validate_keywords for special
+        case anomaly keywords.
+        """
+        missing_anomaly = 0
+        for keyword in self.keywords:
+            if keyword.mandatory and keyword.value is None:
+                if keyword.keyword == 'MEAN_ANOMALY' or keyword.keyword == 'TRUE_ANOMALY':
+                    missing_anomaly += 1
+                else:
+                    raise MissingKeywordError(keyword.keyword)
+            if keyword.value is not None:
+                if not keyword.is_valid():
+                    raise ValueError('%s failed validation.' % keyword.keyword)
+
+        if missing_anomaly != 1:
+            raise MissingKeywordError('MEAN_ANOMALY or TRUE_ANOMALY')
 
     @property
     def true_anomaly(self):
@@ -1328,7 +1365,7 @@ class DataBlockManeuverParameters(DataBlock, KeywordContainer):
         self._comment = DataKeyword('COMMENT', comment, mandatory=False)
         self._man_epoch_ignition = DataKeyword(
             'MAN_EPOCH_IGNITION', man_epoch_ignition,
-            formatter=lambda x: x.isoformat(sep='T'),
+            formatter=format_date,
             validator=validate_date)
         self._man_duration = DataKeyword('MAN_DURATION', man_duration,
                                          units='s')
@@ -1474,7 +1511,7 @@ class Data:
             block=keplerian_elements,
             mandatory=False)
         self._covariance_matrix = DataBlockContainer(
-            name='osition/Velocity Covariance Matrix',
+            name='Position/Velocity Covariance Matrix',
             block=covariance_matrix,
             mandatory=False)
         self._maneuver_parameters = DataBlockContainer(
@@ -1613,15 +1650,15 @@ class Opm:
         yield 'COMMENT Metadata'
         for line in self.metadata.create_output_align_equals():
             yield line
-        yield ''
         for bc in self.data.blocks:
             if bc.block is not None:
+                yield ''
                 yield 'COMMENT %s' % (bc.name if bc.block.name is None
                                       else bc.block.name)
                 for line in bc.block.create_output_align_decimal():
                     yield line
-                yield ''
         if self.user_defined is not None:
+            yield ''
             for key, value in self.user_defined.items():
                 yield 'USER_DEFINED_{key} = {value}'.format(key=key,
                                                             value=value)
