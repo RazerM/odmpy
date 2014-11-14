@@ -1,5 +1,10 @@
+import hashlib
+import random
+import sys
 import unittest
 from datetime import datetime
+from pathlib import Path
+from tempfile import TemporaryFile
 
 import odmpy.opm as opm
 
@@ -8,10 +13,14 @@ class TestOpmSections(unittest.TestCase):
     def setUp(self):
         # Create dummy sections with valid data.
 
+        random.seed(1)
+
+        randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
+
         self.valid_header = opm.Header(
             originator='ESA',
             opm_version='2.0',
-            creation_date=datetime.utcnow()
+            creation_date=datetime(2011,3,1,1,2,3)
         )
 
         self.valid_metadata = opm.Metadata(
@@ -22,16 +31,69 @@ class TestOpmSections(unittest.TestCase):
             time_system=opm.TimeSystem.UTC
         )
 
-        self.valid_data = opm.Data(
-            state_vector=opm.DataBlockStateVector(
-                epoch=datetime.utcnow(),
-                x=0,
-                y=0,
-                z=0,
-                x_dot=0,
-                y_dot=0,
-                z_dot=0
+        self.valid_state_vector = opm.DataBlockStateVector(
+                epoch=datetime(2011,2,24,1,2,3),
+                x=randnum(),
+                y=randnum(),
+                z=randnum(),
+                x_dot=randnum(),
+                y_dot=randnum(),
+                z_dot=randnum()
             )
+
+        self.valid_spacecraft_parameters = opm.DataBlockSpacecraftParameters(
+            mass=randnum(),
+            solar_rad_area=randnum(),
+            solar_rad_coeff=randnum(),
+            drag_area=randnum(),
+            drag_coeff=randnum()
+        )
+
+        self.valid_keplerian_elements = opm.DataBlockKeplerianElements(
+            semi_major_axis=randnum(),
+            eccentricity=randnum(),
+            inclination=randnum(),
+            ra_of_asc_node=randnum(),
+            arg_of_pericenter=randnum(),
+            true_anomaly=randnum(),
+            gm=randnum()
+        )
+
+        self.valid_covariance_matrix = opm.DataBlockCovarianceMatrix(
+            cx_x=randnum(),
+            cy_x=randnum(),
+            cy_y=randnum(),
+            cz_x=randnum(),
+            cz_y=randnum(),
+            cz_z=randnum(),
+            cx_dot_x=randnum(),
+            cx_dot_y=randnum(),
+            cx_dot_z=randnum(),
+            cx_dot_x_dot=randnum(),
+            cy_dot_x=randnum(),
+            cy_dot_y=randnum(),
+            cy_dot_z=randnum(),
+            cy_dot_x_dot=randnum(),
+            cy_dot_y_dot=randnum(),
+            cz_dot_x=randnum(),
+            cz_dot_y=randnum(),
+            cz_dot_z=randnum(),
+            cz_dot_x_dot=randnum(),
+            cz_dot_y_dot=randnum(),
+            cz_dot_z_dot=randnum()
+        )
+
+        self.valid_maneuver_parameters = opm.DataBlockManeuverParameters(
+            man_epoch_ignition=datetime(2014, 11, 12, 13, 14, 15, 999999),
+            man_duration=randnum(),
+            man_delta_mass=-randnum(),
+            man_ref_frame=opm.RefFrame.RSW,
+            man_dv_1=randnum(),
+            man_dv_2=randnum(),
+            man_dv_3=randnum())
+
+        self.valid_data = opm.Data(
+            state_vector=self.valid_state_vector
         )
 
     def test_empty_opm_version(self):
@@ -104,6 +166,8 @@ class TestOpmSections(unittest.TestCase):
 
     def test_both_anomalies(self):
         # Check both cannot be set during initialisation
+        randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
+
         with self.assertRaises(opm.DuplicateKeywordError):
             opm.DataBlockKeplerianElements(
                 semi_major_axis=0,
@@ -132,13 +196,13 @@ class TestOpmSections(unittest.TestCase):
         # Check true can't be set if mean already has been
         with self.assertRaises(opm.DuplicateKeywordError):
             ke = opm.DataBlockKeplerianElements(
-                semi_major_axis=0,
-                eccentricity=0,
-                inclination=0,
-                ra_of_asc_node=0,
-                arg_of_pericenter=0,
-                mean_anomaly=0,
-                gm=0,
+                semi_major_axis=randnum(),
+                eccentricity=randnum(),
+                inclination=randnum(),
+                ra_of_asc_node=randnum(),
+                arg_of_pericenter=randnum(),
+                mean_anomaly=randnum(),
+                gm=randnum()
             )
             ke.true_anomaly = 0
 
@@ -146,15 +210,7 @@ class TestOpmSections(unittest.TestCase):
         """If maneuver parameters are used, spacecraft parameters block
         is mandatory.
         """
-        mp = opm.DataBlockManeuverParameters(
-            man_epoch_ignition=datetime.utcnow(),
-            man_duration=1,
-            man_delta_mass=1,
-            man_ref_frame=opm.RefFrame.TNW,
-            man_dv_1=1,
-            man_dv_2=0,
-            man_dv_3=0
-        )
+        mp = self.valid_maneuver_parameters
 
         data = self.valid_data
         data.maneuver_parameters = mp
@@ -188,13 +244,7 @@ class TestOpmSections(unittest.TestCase):
             man_dv_3=1
         )
 
-        sp = opm.DataBlockSpacecraftParameters(
-            mass=0,
-            solar_rad_area=0,
-            solar_rad_coeff=0,
-            drag_area=0,
-            drag_coeff=0
-        )
+        sp = self.valid_spacecraft_parameters
 
         data = self.valid_data
         data.maneuver_parameters = mp1
@@ -227,47 +277,11 @@ class TestOpmSections(unittest.TestCase):
     def test_invalid_multiple_blocks(self):
         sv = self.valid_data.state_vector.block
 
-        sp = opm.DataBlockSpacecraftParameters(
-            mass=0,
-            solar_rad_area=0,
-            solar_rad_coeff=0,
-            drag_area=0,
-            drag_coeff=0
-        )
+        sp = self.valid_spacecraft_parameters
 
-        ke = opm.DataBlockKeplerianElements(
-            semi_major_axis=0,
-            eccentricity=0,
-            inclination=0,
-            ra_of_asc_node=0,
-            arg_of_pericenter=0,
-            true_anomaly=0,
-            gm=0
-        )
+        ke = self.valid_keplerian_elements
 
-        cm = opm.DataBlockCovarianceMatrix(
-            cx_x=0,
-            cy_x=0,
-            cy_y=0,
-            cz_x=0,
-            cz_y=0,
-            cz_z=0,
-            cx_dot_x=0,
-            cx_dot_y=0,
-            cx_dot_z=0,
-            cx_dot_x_dot=0,
-            cy_dot_x=0,
-            cy_dot_y=0,
-            cy_dot_z=0,
-            cy_dot_x_dot=0,
-            cy_dot_y_dot=0,
-            cz_dot_x=0,
-            cz_dot_y=0,
-            cz_dot_z=0,
-            cz_dot_x_dot=0,
-            cz_dot_y_dot=0,
-            cz_dot_z_dot=0
-        )
+        cm = self.valid_covariance_matrix
 
 
         data = opm.Data(
@@ -309,13 +323,7 @@ class TestOpmSections(unittest.TestCase):
     def test_multiple_blocks_type(self):
         data = self.valid_data
 
-        sp = opm.DataBlockSpacecraftParameters(
-            mass=0,
-            solar_rad_area=0,
-            solar_rad_coeff=0,
-            drag_area=0,
-            drag_coeff=0
-        )
+        sp = self.valid_spacecraft_parameters
 
         data.spacecraft_parameters = sp
         data.maneuver_parameters = [1]
@@ -329,6 +337,56 @@ class TestOpmSections(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             data.validate_blocks()
+
+    def test_output(self):
+        """Fail test if output doesn't match previously created file."""
+        data = opm.Data(
+            state_vector=self.valid_state_vector,
+            spacecraft_parameters=self.valid_spacecraft_parameters,
+            keplerian_elements=self.valid_keplerian_elements,
+            covariance_matrix=self.valid_covariance_matrix,
+            maneuver_parameters=self.valid_maneuver_parameters)
+
+        opm_obj = opm.Opm(
+            header=self.valid_header,
+            metadata=self.valid_metadata,
+            data=data)
+
+        output_hash = hashlib.sha256()
+        for line in opm_obj.output():
+            output_hash.update(line.encode('utf-8'))
+
+        valid_hash = hashlib.sha256()
+        with open(str(Path('.', 'odmpy', 'tests', 'valid.opm.txt')), 'r') as f:
+            for line in f.read().splitlines():
+                valid_hash.update(line.encode('utf-8'))
+        self.assertEqual(output_hash.hexdigest(), valid_hash.hexdigest())
+
+    def test_write(self):
+        data = opm.Data(
+            state_vector=self.valid_state_vector,
+            spacecraft_parameters=self.valid_spacecraft_parameters,
+            keplerian_elements=self.valid_keplerian_elements,
+            covariance_matrix=self.valid_covariance_matrix,
+            maneuver_parameters=self.valid_maneuver_parameters)
+
+        opm_obj = opm.Opm(
+            header=self.valid_header,
+            metadata=self.valid_metadata,
+            data=data)
+
+        file_hash = hashlib.sha256()
+        with TemporaryFile(mode='w+') as f:
+            opm_obj.write(f)
+            f.seek(0)
+            for line in f.read().splitlines():
+                file_hash.update(line.encode('utf-8'))
+
+        valid_hash = hashlib.sha256()
+        with open(str(Path('.', 'odmpy', 'tests', 'valid.opm.txt')), 'r') as f:
+            for line in f.read().splitlines():
+                valid_hash.update(line.encode('utf-8'))
+        self.assertEqual(file_hash.hexdigest(), valid_hash.hexdigest())
 
 class TestValidators(unittest.TestCase):
     def test_validate_object_id(self):
@@ -346,3 +404,13 @@ class TestValidators(unittest.TestCase):
     def test_validate_string(self):
         self.assertTrue(opm.validate_string('non-empty'))
         self.assertFalse(opm.validate_string(''))
+
+
+class TestFormatters(unittest.TestCase):
+    def test_format_date(self):
+        self.assertEqual(opm.format_date(datetime(2014, 11, 12, 13, 14, 15, 999999)), '2014-11-12T13:14:15.999999')
+        self.assertEqual(opm.format_date(datetime(2014, 11, 12, 13, 14, 15)), '2014-11-12T13:14:15')
+
+    def test_format_date_yyyyddd(self):
+        self.assertEqual(opm.format_date_yyyyddd(datetime(2014, 11, 12, 13, 14, 15, 999999)), '2014-316T13:14:15.999999')
+        self.assertEqual(opm.format_date_yyyyddd(datetime(2014, 11, 12, 13, 14, 15)), '2014-316T13:14:15')
