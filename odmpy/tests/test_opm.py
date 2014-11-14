@@ -14,7 +14,6 @@ class TestOpmSections(unittest.TestCase):
         # Create dummy sections with valid data.
 
         random.seed(1)
-
         randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
 
         self.valid_header = opm.Header(
@@ -167,6 +166,7 @@ class TestOpmSections(unittest.TestCase):
 
     def test_both_anomalies(self):
         # Check both cannot be set during initialisation
+        random.seed(1)
         randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
 
         with self.assertRaises(opm.DuplicateKeywordError):
@@ -340,6 +340,8 @@ class TestOpmSections(unittest.TestCase):
 
     def test_output(self):
         """Fail test if output doesn't match previously created file."""
+
+        random.seed(1)
         randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
 
         data = opm.Data(
@@ -368,6 +370,7 @@ class TestOpmSections(unittest.TestCase):
         self.assertEqual(output_hash.hexdigest(), valid_hash.hexdigest())
 
     def test_write(self):
+        random.seed(1)
         randnum = lambda: random.uniform(-1, 1) ** random.randint(-20, 20)
 
         data = opm.Data(
