@@ -2,6 +2,7 @@ import hashlib
 import random
 import sys
 import unittest
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryFile
@@ -351,7 +352,9 @@ class TestOpmSections(unittest.TestCase):
             covariance_matrix=self.valid_covariance_matrix,
             maneuver_parameters=self.valid_maneuver_parameters)
 
-        user_defined = {'TEST': randnum(), 'TEST2': 'String'}
+        user_defined = OrderedDict()
+        user_defined['TEST'] = randnum()
+        user_defined['TEST2'] = 'String'
 
         opm_obj = opm.Opm(
             header=self.valid_header,
@@ -362,6 +365,9 @@ class TestOpmSections(unittest.TestCase):
         output_hash = hashlib.sha256()
         for line in opm_obj.output():
             output_hash.update(line.encode('utf-8'))
+
+        with open(str(Path('.', 'odmpy', 'tests', 'test.opm.txt')), 'w') as f:
+            opm_obj.write(f)
 
         valid_hash = hashlib.sha256()
         with open(str(Path('.', 'odmpy', 'tests', 'valid.opm.txt')), 'r') as f:
@@ -380,7 +386,9 @@ class TestOpmSections(unittest.TestCase):
             covariance_matrix=self.valid_covariance_matrix,
             maneuver_parameters=self.valid_maneuver_parameters)
 
-        user_defined = {'TEST': randnum(), 'TEST2': 'String'}
+        user_defined = OrderedDict()
+        user_defined['TEST'] = randnum()
+        user_defined['TEST2'] = 'String'
 
         opm_obj = opm.Opm(
             header=self.valid_header,
