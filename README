@@ -17,8 +17,8 @@ Installation
 
     $ pip install odmpy
 
-`Documentation <http://pythonhosted.org/odmpy/>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`Package Documentation <http://pythonhosted.org/odmpy/>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. |Build Status| image:: http://img.shields.io/travis/RazerM/odmpy.svg?style=flat-square
    :target: https://travis-ci.org/RazerM/odmpy
@@ -27,6 +27,6 @@ Installation
 .. |PyPI Version| image:: http://img.shields.io/pypi/v/odmpy.svg?style=flat-square
    :target: https://pypi.python.org/pypi/odmpy/
 .. |Python Version| image:: http://img.shields.io/badge/python-3.0%2B-brightgreen.svg?style=flat-square
-   :target: https://www.python.org/download/releases/3.0/
+   :target: https://www.python.org/downloads/
 .. |MIT License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
    :target: https://raw.githubusercontent.com/RazerM/odmpy/master/LICENSE

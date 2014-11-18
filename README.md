@@ -1,5 +1,16 @@
 ## Orbit Data Messages
-[![Build Status](http://img.shields.io/travis/RazerM/odmpy.svg?style=flat-square)](https://travis-ci.org/RazerM/odmpy) [![Test Coverage](http://img.shields.io/codecov/c/github/RazerM/odmpy.svg?style=flat-square)](https://codecov.io/github/RazerM/odmpy) [![PyPI Version](http://img.shields.io/pypi/v/odmpy.svg?style=flat-square)](https://pypi.python.org/pypi/odmpy/) [![Python Version](http://img.shields.io/badge/python-3.0%2B-brightgreen.svg?style=flat-square)](https://www.python.org/download/releases/3.0/) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/RazerM/odmpy/master/LICENSE)
+[![Build Status][bsi]][bsl] [![Test Coverage][tci]][tcl] [![PyPI Version][ppi]][ppl] [![Python Version][pvi]][pvl] [![MIT License][mli]][mll]
+
+  [bsi]: http://img.shields.io/travis/RazerM/odmpy.svg?style=flat-square
+  [bsl]: https://travis-ci.org/RazerM/odmpy
+  [tci]: http://img.shields.io/codecov/c/github/RazerM/odmpy.svg?style=flat-square
+  [tcl]: https://codecov.io/github/RazerM/odmpy
+  [ppi]: http://img.shields.io/pypi/v/odmpy.svg?style=flat-square
+  [ppl]: https://pypi.python.org/pypi/odmpy/
+  [pvi]: http://img.shields.io/badge/python-3.0%2B-brightgreen.svg?style=flat-square
+  [pvl]: https://www.python.org/downloads/
+  [mli]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
+  [mll]: https://raw.githubusercontent.com/RazerM/odmpy/master/LICENSE
 
 
 
@@ -13,4 +24,4 @@ Currently, only the orbital parameter message (OPM) module has been implemented.
 $ pip install odmpy
 ```
 
-### [Documentation](http://pythonhosted.org/odmpy/)
+### [Package Documentation](http://pythonhosted.org/odmpy/)
