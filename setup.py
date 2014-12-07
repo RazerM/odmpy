@@ -13,6 +13,7 @@ metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", init_data))
 AUTHOR_EMAIL = metadata['author']
 VERSION = metadata['version']
 LICENSE = metadata['license']
+DESCRIPTION = metadata['description']
 
 AUTHOR, EMAIL = re.match(r'(.*) <(.*)>', AUTHOR_EMAIL).groups()
 
@@ -20,6 +21,7 @@ if sys.version_info[:2] < (3, 4):
     requires = ['enum34', 'pathlib']
 else:
     requires = []
+
 
 class PyTest(Command):
     """Allow 'python setup.py test' to run without first installing pytest"""
@@ -38,7 +40,7 @@ class PyTest(Command):
 setup(
     name='odmpy',
     version=VERSION,
-    description='Create valid ASCII OPM, OMM, and OEM files.',
+    description=DESCRIPTION,
     long_description=open('README').read(),
     author=AUTHOR,
     author_email=EMAIL,

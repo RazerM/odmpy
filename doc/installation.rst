@@ -2,7 +2,7 @@
 Installation
 ************
 
-The odmpy package can be installed on any system running **Python 3.4 onwards**. It has no external dependencies.
+The odmpy package can be installed on any system running **Python 3**.
 
 The recommended installation method is using ``pip``.
 
@@ -23,10 +23,10 @@ Git
 
 Check out a `release tag <https://github.com/RazerM/odmpy/releases>`_:
 
-.. code-block:: sh
+.. parsed-literal::
 
 	$ cd odmpy
-	$ git checkout 0.1.5
+	$ git checkout |version|
 
 Test and install:
 
